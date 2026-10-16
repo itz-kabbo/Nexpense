@@ -67,7 +67,7 @@ class ExpenseDaoTest {
 
     @Test
     fun observeTotal_emptyRange_returnsZero() = runTest {
-        dao.observeTotal("2026-10-01", "2026-10-31").test {
+        dao.observeTotal("2026-10-01", "2026-10-31", currency = "USD").test {
             assertEquals(0L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -80,7 +80,7 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "3", amountMinor = 5000L, localDate = "2026-11-01")) // Out of range
         dao.upsert(createExpense(id = "4", amountMinor = 2000L, localDate = "2026-10-15", deletedAt = 2000L)) // Deleted
 
-        dao.observeTotal("2026-10-01", "2026-10-31").test {
+        dao.observeTotal("2026-10-01", "2026-10-31", currency = "USD").test {
             assertEquals(4250L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -94,7 +94,7 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "4", amountMinor = 500L, localDate = "2026-10-13", categoryId = "fun"))
         dao.upsert(createExpense(id = "5", amountMinor = 9999L, localDate = "2026-10-14", categoryId = "home", deletedAt = 3000L))
 
-        dao.observeByCategory("2026-10-01", "2026-10-31").test {
+        dao.observeByCategory("2026-10-01", "2026-10-31", currency = "USD").test {
             val categories = awaitItem()
             assertEquals(3, categories.size)
 
@@ -126,7 +126,7 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "5", amountMinor = 5000L, localDate = "2026-10-16", deletedAt = 1000L))
 
         // len = 7 produces "YYYY-MM"
-        dao.observeBuckets("2026-08-01", "2026-10-31", len = 7).test {
+        dao.observeBuckets("2026-08-01", "2026-10-31", len = 7, currency = "USD").test {
             val buckets = awaitItem()
             assertEquals(3, buckets.size)
 
@@ -150,7 +150,7 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "3", amountMinor = 3000L, localDate = "2026-10-15"))
 
         // len = 10 produces "YYYY-MM-DD"
-        dao.observeBuckets("2026-10-01", "2026-10-31", len = 10).test {
+        dao.observeBuckets("2026-10-01", "2026-10-31", len = 10, currency = "USD").test {
             val buckets = awaitItem()
             assertEquals(2, buckets.size)
 
@@ -172,7 +172,7 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "4", amountMinor = 4000L, localDate = "2026-03-10"))
 
         // len = 4 produces "YYYY"
-        dao.observeBuckets("2024-01-01", "2026-12-31", len = 4).test {
+        dao.observeBuckets("2024-01-01", "2026-12-31", len = 4, currency = "USD").test {
             val buckets = awaitItem()
             assertEquals(3, buckets.size)
 
@@ -214,7 +214,7 @@ class ExpenseDaoTest {
         }
 
         // Verify excluded from observeTotal
-        dao.observeTotal("2026-10-01", "2026-10-31").test {
+        dao.observeTotal("2026-10-01", "2026-10-31", currency = "USD").test {
             assertEquals(0L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -239,7 +239,7 @@ class ExpenseDaoTest {
             assertEquals("exp-1", items[0].id)
             cancelAndIgnoreRemainingEvents()
         }
-        dao.observeTotal("2026-10-01", "2026-10-31").test {
+        dao.observeTotal("2026-10-01", "2026-10-31", currency = "USD").test {
             assertEquals(1500L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -252,13 +252,13 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "3", amountMinor = 400L, localDate = "2026-02-02"))
 
         // Query crossing Jan 31 to Feb 1
-        dao.observeTotal("2026-01-31", "2026-02-01").test {
+        dao.observeTotal("2026-01-31", "2026-02-01", currency = "USD").test {
             assertEquals(300L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 
         // Query exactly Jan 31
-        dao.observeTotal("2026-01-31", "2026-01-31").test {
+        dao.observeTotal("2026-01-31", "2026-01-31", currency = "USD").test {
             assertEquals(100L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -270,13 +270,13 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "2", amountMinor = 700L, localDate = "2026-01-01"))
         dao.upsert(createExpense(id = "3", amountMinor = 900L, localDate = "2026-01-02"))
 
-        dao.observeTotal("2025-12-31", "2026-01-01").test {
+        dao.observeTotal("2025-12-31", "2026-01-01", currency = "USD").test {
             assertEquals(1200L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 
         // Entire 2026 year range
-        dao.observeTotal("2026-01-01", "2026-12-31").test {
+        dao.observeTotal("2026-01-01", "2026-12-31", currency = "USD").test {
             assertEquals(1600L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -290,25 +290,60 @@ class ExpenseDaoTest {
         dao.upsert(createExpense(id = "3", amountMinor = 300L, localDate = "2024-03-01"))
 
         // Exact leap day
-        dao.observeTotal("2024-02-29", "2024-02-29").test {
+        dao.observeTotal("2024-02-29", "2024-02-29", currency = "USD").test {
             assertEquals(200L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 
         // Range across leap day
-        dao.observeTotal("2024-02-28", "2024-03-01").test {
+        dao.observeTotal("2024-02-28", "2024-03-01", currency = "USD").test {
             assertEquals(600L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 
         // Buckets for leap month (len = 7)
-        dao.observeBuckets("2024-02-01", "2024-03-31", len = 7).test {
+        dao.observeBuckets("2024-02-01", "2024-03-31", len = 7, currency = "USD").test {
             val buckets = awaitItem()
             assertEquals(2, buckets.size)
             assertEquals("2024-02", buckets[0].bucket)
             assertEquals(300L, buckets[0].total)
             assertEquals("2024-03", buckets[1].bucket)
             assertEquals(300L, buckets[1].total)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun observeTotalAndCategories_filtersByCurrency() = runTest {
+        // Insert expenses in USD and TWD
+        dao.upsert(createExpense(id = "usd-1", amountMinor = 1000L, currency = "USD", categoryId = "food", localDate = "2026-10-15"))
+        dao.upsert(createExpense(id = "twd-1", amountMinor = 50000L, currency = "TWD", categoryId = "food", localDate = "2026-10-15"))
+
+        // Query USD total: should be only 1000L
+        dao.observeTotal("2026-10-01", "2026-10-31", currency = "USD").test {
+            assertEquals(1000L, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Query TWD total: should be only 50000L
+        dao.observeTotal("2026-10-01", "2026-10-31", currency = "TWD").test {
+            assertEquals(50000L, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Query USD categories: should only show USD total
+        dao.observeByCategory("2026-10-01", "2026-10-31", currency = "USD").test {
+            val categories = awaitItem()
+            assertEquals(1, categories.size)
+            assertEquals(1000L, categories[0].total)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Query TWD categories: should only show TWD total
+        dao.observeByCategory("2026-10-01", "2026-10-31", currency = "TWD").test {
+            val categories = awaitItem()
+            assertEquals(1, categories.size)
+            assertEquals(50000L, categories[0].total)
             cancelAndIgnoreRemainingEvents()
         }
     }

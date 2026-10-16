@@ -16,6 +16,10 @@ object ClockModule {
     @Provides
     @Singleton
     fun provideClock(): Clock = Clock.systemDefaultZone()
+
+    @Provides
+    @Singleton
+    fun provideZoneId(clock: Clock): ZoneId = clock.zone
 }
 
 /**

@@ -62,5 +62,33 @@
     <string name="insight_empty">此期間尚無支出</string>
     <string name="cd_previous_period">上一個期間</string>
     <string name="cd_next_period">下一個期間</string>
+    <string name="settings_title">設定</string>
+    <string name="settings_section_appearance">外觀</string>
+    <string name="theme_system">跟隨系統</string>
+    <string name="theme_light">淺色</string>
+    <string name="theme_dark">深色</string>
+    <string name="settings_section_language">語言</string>
+    <string name="language_system">跟隨系統</string>
+    <string name="language_en">English</string>
+    <string name="language_zh_tw">繁體中文</string>
+    <string name="settings_section_currency">幣別</string>
+    <string name="settings_section_categories">分類</string>
+    <string name="settings_add_category">新增分類</string>
+    <string name="settings_rename_category">重新命名分類</string>
+    <string name="settings_category_name">分類名稱</string>
+    <string name="settings_hide">隱藏</string>
+    <string name="settings_show">顯示</string>
+    <string name="settings_section_data">資料與備份</string>
+    <string name="settings_export_json">匯出 JSON</string>
+    <string name="settings_export_csv">匯出 CSV</string>
+    <string name="settings_import_data">匯入資料</string>
+    <string name="settings_import_success">已匯入 %1$d 筆支出，%2$d 個分類</string>
+    <string name="settings_import_failed">資料匯入失敗</string>
+    <string name="settings_export_success">匯出成功</string>
+    <string name="settings_section_about">關於與隱私</string>
+    <string name="settings_version">版本 %1$s</string>
+    <string name="settings_privacy_note">100% 離線，無網路權限。</string>
+    <string name="cd_back">返回</string>
+    <string name="cd_toggle_hidden">切換分類顯示狀態</string>
 </resources>
 

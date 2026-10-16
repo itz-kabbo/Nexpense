@@ -9,6 +9,7 @@ import javax.inject.Singleton
 interface CategoryRepository {
     fun observeAll(): Flow<List<CategoryEntity>>
     fun observeActive(): Flow<List<CategoryEntity>>
+    suspend fun getAll(): List<CategoryEntity>
     suspend fun getById(id: String): CategoryEntity?
     suspend fun seedDefaultsIfEmpty()
     suspend fun updateNameOverride(id: String, nameOverride: String?)
@@ -45,6 +46,10 @@ class CategoryRepositoryImpl @Inject constructor(
 
     override suspend fun setHidden(id: String, isHidden: Boolean) {
         categoryDao.setHidden(id, isHidden)
+    }
+
+    override suspend fun getAll(): List<CategoryEntity> {
+        return categoryDao.getAll()
     }
 
     override suspend fun upsert(category: CategoryEntity) {

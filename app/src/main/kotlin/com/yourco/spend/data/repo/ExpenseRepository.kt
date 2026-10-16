@@ -15,10 +15,11 @@ interface ExpenseRepository {
     suspend fun softDelete(id: String, now: Long? = null)
     suspend fun restore(id: String)
     fun observeDay(date: String): Flow<List<ExpenseEntity>>
-    fun observeTotal(from: String, to: String): Flow<Long>
-    fun observeByCategory(from: String, to: String): Flow<List<CategoryTotal>>
-    fun observeBuckets(from: String, to: String, len: Int): Flow<List<BucketTotal>>
+    fun observeTotal(from: String, to: String, currency: String): Flow<Long>
+    fun observeByCategory(from: String, to: String, currency: String): Flow<List<CategoryTotal>>
+    fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<BucketTotal>>
     suspend fun getById(id: String): ExpenseEntity?
+    suspend fun getAll(): List<ExpenseEntity>
 }
 
 @Singleton
@@ -48,19 +49,23 @@ class ExpenseRepositoryImpl @Inject constructor(
         return expenseDao.observeDay(date)
     }
 
-    override fun observeTotal(from: String, to: String): Flow<Long> {
-        return expenseDao.observeTotal(from, to)
+    override fun observeTotal(from: String, to: String, currency: String): Flow<Long> {
+        return expenseDao.observeTotal(from, to, currency)
     }
 
-    override fun observeByCategory(from: String, to: String): Flow<List<CategoryTotal>> {
-        return expenseDao.observeByCategory(from, to)
+    override fun observeByCategory(from: String, to: String, currency: String): Flow<List<CategoryTotal>> {
+        return expenseDao.observeByCategory(from, to, currency)
     }
 
-    override fun observeBuckets(from: String, to: String, len: Int): Flow<List<BucketTotal>> {
-        return expenseDao.observeBuckets(from, to, len)
+    override fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<BucketTotal>> {
+        return expenseDao.observeBuckets(from, to, len, currency)
     }
 
     override suspend fun getById(id: String): ExpenseEntity? {
         return expenseDao.getById(id)
+    }
+
+    override suspend fun getAll(): List<ExpenseEntity> {
+        return expenseDao.getAll()
     }
 }

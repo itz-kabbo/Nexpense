@@ -470,10 +470,11 @@ private class UiFakeExpenseRepo : ExpenseRepository {
     }
 
     override fun observeDay(date: String): Flow<List<ExpenseEntity>> = dayFlow
-    override fun observeTotal(from: String, to: String): Flow<Long> = totalFlow
-    override fun observeByCategory(from: String, to: String): Flow<List<CategoryTotal>> = MutableStateFlow(emptyList())
-    override fun observeBuckets(from: String, to: String, len: Int): Flow<List<BucketTotal>> = MutableStateFlow(emptyList())
+    override fun observeTotal(from: String, to: String, currency: String): Flow<Long> = totalFlow
+    override fun observeByCategory(from: String, to: String, currency: String): Flow<List<CategoryTotal>> = MutableStateFlow(emptyList())
+    override fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<BucketTotal>> = MutableStateFlow(emptyList())
     override suspend fun getById(id: String): ExpenseEntity? = allExpenses.find { it.id == id }
+    override suspend fun getAll(): List<ExpenseEntity> = allExpenses
 }
 
 private class UiFakeCategoryRepo : CategoryRepository {
@@ -481,6 +482,7 @@ private class UiFakeCategoryRepo : CategoryRepository {
 
     override fun observeAll(): Flow<List<CategoryEntity>> = categories
     override fun observeActive(): Flow<List<CategoryEntity>> = categories
+    override suspend fun getAll(): List<CategoryEntity> = categories.value
     override suspend fun getById(id: String): CategoryEntity? = categories.value.find { it.id == id }
     override suspend fun seedDefaultsIfEmpty() {}
     override suspend fun updateNameOverride(id: String, nameOverride: String?) {}

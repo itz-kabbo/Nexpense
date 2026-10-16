@@ -13,11 +13,13 @@ import com.yourco.spend.data.repo.ExpenseRepository
 import com.yourco.spend.data.repo.LearnedMappingRepository
 import com.yourco.spend.data.repo.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -26,6 +28,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class RecordViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
@@ -44,22 +47,24 @@ class RecordViewModel @Inject constructor(
 
     private val todayIso: String = clock.todayLocalDate()
 
-    val state: StateFlow<RecordUiState> = combine(
-        expenseRepository.observeDay(todayIso),
-        expenseRepository.observeTotal(todayIso, todayIso),
-        settingsRepository.currencyCode,
-    ) { expenses, totalMinor, currencyCode ->
-        val locale = Locale.getDefault()
-        RecordUiState(
-            todayDateLabel = formatTodayDate(locale),
-            totalMinor = totalMinor,
-            formattedTotal = formatMinor(totalMinor, currencyCode, locale),
-            currencySymbol = currencySymbol(currencyCode, locale),
-            amountString = formatAmountDigits(totalMinor, currencyCode, locale),
-            expenses = expenses,
-            currencyCode = currencyCode,
-        )
-    }.stateIn(
+    val state: StateFlow<RecordUiState> = settingsRepository.currencyCode
+        .flatMapLatest { currencyCode ->
+            combine(
+                expenseRepository.observeDay(todayIso),
+                expenseRepository.observeTotal(todayIso, todayIso, currency = currencyCode),
+            ) { expenses, totalMinor ->
+                val locale = Locale.getDefault()
+                RecordUiState(
+                    todayDateLabel = formatTodayDate(locale),
+                    totalMinor = totalMinor,
+                    formattedTotal = formatMinor(totalMinor, currencyCode, locale),
+                    currencySymbol = currencySymbol(currencyCode, locale),
+                    amountString = formatAmountDigits(totalMinor, currencyCode, locale),
+                    expenses = expenses,
+                    currencyCode = currencyCode,
+                )
+            }
+        }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = RecordUiState(

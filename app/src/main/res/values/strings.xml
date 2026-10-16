@@ -62,5 +62,33 @@
     <string name="insight_empty">No expenses in this period</string>
     <string name="cd_previous_period">Previous period</string>
     <string name="cd_next_period">Next period</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_section_language">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_en">English</string>
+    <string name="language_zh_tw">繁體中文</string>
+    <string name="settings_section_currency">Currency</string>
+    <string name="settings_section_categories">Categories</string>
+    <string name="settings_add_category">Add category</string>
+    <string name="settings_rename_category">Rename category</string>
+    <string name="settings_category_name">Category name</string>
+    <string name="settings_hide">Hide</string>
+    <string name="settings_show">Show</string>
+    <string name="settings_section_data">Data &amp; Backup</string>
+    <string name="settings_export_json">Export JSON</string>
+    <string name="settings_export_csv">Export CSV</string>
+    <string name="settings_import_data">Import data</string>
+    <string name="settings_import_success">Imported %1$d expenses, %2$d categories</string>
+    <string name="settings_import_failed">Failed to import data</string>
+    <string name="settings_export_success">Export successful</string>
+    <string name="settings_section_about">About &amp; Privacy</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_privacy_note">100% offline. No internet permission.</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_toggle_hidden">Toggle category visibility</string>
 </resources>
 

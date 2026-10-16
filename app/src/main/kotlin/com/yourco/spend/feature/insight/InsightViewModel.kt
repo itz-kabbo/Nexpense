@@ -56,27 +56,26 @@ class InsightViewModel @Inject constructor(
     private val _mode = MutableStateFlow(initialMode)
     private val _anchorDate = MutableStateFlow(initialAnchor)
 
-    private data class QueryKey(val mode: InsightMode, val anchor: LocalDate)
+    private data class QueryKey(val mode: InsightMode, val anchor: LocalDate, val currencyCode: String)
 
-    val state: StateFlow<InsightUiState> = combine(_mode, _anchorDate) { mode, anchor ->
-        QueryKey(mode, anchor)
-    }.flatMapLatest { (mode, anchor) ->
+    val state: StateFlow<InsightUiState> = combine(_mode, _anchorDate, settingsRepository.currencyCode) { mode, anchor, currencyCode ->
+        QueryKey(mode, anchor, currencyCode)
+    }.flatMapLatest { (mode, anchor, currencyCode) ->
         val bounds = periodBounds(mode, anchor)
         val from = bounds.startIso
         val to = bounds.endIso
         val bucketsFlow = when (mode) {
-            InsightMode.YEAR -> expenseRepository.observeBuckets(from, to, len = 7)
-            InsightMode.MONTH -> expenseRepository.observeBuckets(from, to, len = 10)
+            InsightMode.YEAR -> expenseRepository.observeBuckets(from, to, len = 7, currency = currencyCode)
+            InsightMode.MONTH -> expenseRepository.observeBuckets(from, to, len = 10, currency = currencyCode)
             InsightMode.DAY -> flowOf(emptyList())
         }
 
         combine(
-            expenseRepository.observeTotal(from, to),
-            expenseRepository.observeByCategory(from, to),
+            expenseRepository.observeTotal(from, to, currency = currencyCode),
+            expenseRepository.observeByCategory(from, to, currency = currencyCode),
             bucketsFlow,
-            settingsRepository.currencyCode,
             categoryRepository.observeAll(),
-        ) { totalMinor, categoryTotals, buckets, currencyCode, categoriesList ->
+        ) { totalMinor, categoryTotals, buckets, categoriesList ->
             val locale = Locale.getDefault()
             val todayDate = today
             val categoryEntityMap = categoriesList.associateBy { it.id }

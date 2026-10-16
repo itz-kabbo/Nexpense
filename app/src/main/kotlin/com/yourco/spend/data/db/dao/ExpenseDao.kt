@@ -24,22 +24,25 @@ interface ExpenseDao {
     @Query("SELECT * FROM expense WHERE local_date = :date AND deleted_at IS NULL ORDER BY created_at DESC")
     fun observeDay(date: String): Flow<List<ExpenseEntity>>
 
-    @Query("SELECT COALESCE(SUM(amount_minor), 0) FROM expense WHERE local_date BETWEEN :from AND :to AND deleted_at IS NULL")
-    fun observeTotal(from: String, to: String): Flow<Long>
+    // VERIFY: Scoped by currency so totals never mix units across different currencies
+    @Query("SELECT COALESCE(SUM(amount_minor), 0) FROM expense WHERE local_date BETWEEN :from AND :to AND deleted_at IS NULL AND currency = :currency")
+    fun observeTotal(from: String, to: String, currency: String): Flow<Long>
 
+    // VERIFY: Scoped by currency so totals never mix units across different currencies
     @Query(
         "SELECT category_id, SUM(amount_minor) AS total, COUNT(*) AS count FROM expense " +
-            "WHERE local_date BETWEEN :from AND :to AND deleted_at IS NULL " +
+            "WHERE local_date BETWEEN :from AND :to AND deleted_at IS NULL AND currency = :currency " +
             "GROUP BY category_id ORDER BY total DESC"
     )
-    fun observeByCategory(from: String, to: String): Flow<List<CategoryTotal>>
+    fun observeByCategory(from: String, to: String, currency: String): Flow<List<CategoryTotal>>
 
     // len = 7 groups by month (yyyy-MM), len = 10 groups by day (yyyy-MM-dd)
+    // VERIFY: Scoped by currency so totals never mix units across different currencies
     @Query(
         "SELECT substr(local_date, 1, :len) AS bucket, SUM(amount_minor) AS total FROM expense " +
-            "WHERE local_date BETWEEN :from AND :to AND deleted_at IS NULL GROUP BY bucket ORDER BY bucket"
+            "WHERE local_date BETWEEN :from AND :to AND deleted_at IS NULL AND currency = :currency GROUP BY bucket ORDER BY bucket"
     )
-    fun observeBuckets(from: String, to: String, len: Int): Flow<List<BucketTotal>>
+    fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<BucketTotal>>
 
     @Query("SELECT * FROM expense WHERE id = :id")
     suspend fun getById(id: String): ExpenseEntity?

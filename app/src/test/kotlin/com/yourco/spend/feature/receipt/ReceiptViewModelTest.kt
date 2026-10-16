@@ -358,13 +358,14 @@ private class FakeReceiptExpenseRepository : ExpenseRepository {
         return dayFlows.getOrPut(date) { MutableStateFlow(emptyList()) }
     }
 
-    override fun observeTotal(from: String, to: String): Flow<Long> {
+    override fun observeTotal(from: String, to: String, currency: String): Flow<Long> {
         return totalFlows.getOrPut(from) { MutableStateFlow(0L) }
     }
 
-    override fun observeByCategory(from: String, to: String): Flow<List<CategoryTotal>> = flowOf(emptyList())
-    override fun observeBuckets(from: String, to: String, len: Int): Flow<List<BucketTotal>> = flowOf(emptyList())
+    override fun observeByCategory(from: String, to: String, currency: String): Flow<List<CategoryTotal>> = flowOf(emptyList())
+    override fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<BucketTotal>> = flowOf(emptyList())
     override suspend fun getById(id: String): ExpenseEntity? = null
+    override suspend fun getAll(): List<ExpenseEntity> = emptyList()
 }
 
 private class FakeReceiptSettingsRepository : SettingsRepository {

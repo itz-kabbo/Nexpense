@@ -56,14 +56,13 @@ class ReceiptViewModel @Inject constructor(
         return date.format(formatter)
     }
 
-    val state: StateFlow<ReceiptUiState> = _currentDate
-        .flatMapLatest { date ->
+    val state: StateFlow<ReceiptUiState> = combine(_currentDate, settingsRepository.currencyCode, ::Pair)
+        .flatMapLatest { (date, currencyCode) ->
             val dateIso = date.toString()
             combine(
                 expenseRepository.observeDay(dateIso),
-                expenseRepository.observeTotal(dateIso, dateIso),
-                settingsRepository.currencyCode,
-            ) { expenses, totalFromDb, currencyCode ->
+                expenseRepository.observeTotal(dateIso, dateIso, currency = currencyCode),
+            ) { expenses, totalFromDb ->
                 val locale = Locale.getDefault()
                 // VERIFY: Receipt items ordering chronological (oldest first like printed shopping slip)
                 val items = expenses.reversed().map { expense ->

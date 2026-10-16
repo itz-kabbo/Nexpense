@@ -407,17 +407,17 @@ private class FakeInsightExpenseRepository : ExpenseRepository {
         bucketFlows.getOrPut(key) { MutableStateFlow(emptyList()) }.value = buckets
     }
 
-    override fun observeTotal(from: String, to: String): Flow<Long> {
+    override fun observeTotal(from: String, to: String, currency: String): Flow<Long> {
         val key = "$from:$to"
         return totalFlows.getOrPut(key) { MutableStateFlow(0L) }
     }
 
-    override fun observeByCategory(from: String, to: String): Flow<List<CategoryTotal>> {
+    override fun observeByCategory(from: String, to: String, currency: String): Flow<List<CategoryTotal>> {
         val key = "$from:$to"
         return categoryFlows.getOrPut(key) { MutableStateFlow(emptyList()) }
     }
 
-    override fun observeBuckets(from: String, to: String, len: Int): Flow<List<BucketTotal>> {
+    override fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<BucketTotal>> {
         val key = "$from:$to:$len"
         return bucketFlows.getOrPut(key) { MutableStateFlow(emptyList()) }
     }
@@ -428,6 +428,7 @@ private class FakeInsightExpenseRepository : ExpenseRepository {
     override suspend fun restore(id: String) {}
     override fun observeDay(date: String): Flow<List<ExpenseEntity>> = flowOf(emptyList())
     override suspend fun getById(id: String): ExpenseEntity? = null
+    override suspend fun getAll(): List<ExpenseEntity> = emptyList()
 }
 
 private class FakeInsightCategoryRepository : CategoryRepository {
@@ -446,6 +447,7 @@ private class FakeInsightCategoryRepository : CategoryRepository {
 
     override fun observeAll(): Flow<List<CategoryEntity>> = categoriesFlow
     override fun observeActive(): Flow<List<CategoryEntity>> = categoriesFlow
+    override suspend fun getAll(): List<CategoryEntity> = categoriesFlow.value
     override suspend fun getById(id: String): CategoryEntity? = categoriesFlow.value.firstOrNull { it.id == id }
     override suspend fun seedDefaultsIfEmpty() {}
     override suspend fun updateNameOverride(id: String, nameOverride: String?) {}

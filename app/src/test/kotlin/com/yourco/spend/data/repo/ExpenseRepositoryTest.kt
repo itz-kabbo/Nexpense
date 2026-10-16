@@ -123,12 +123,12 @@ class ExpenseRepositoryTest {
         repository.add(sampleExpense(id = "1", amount = 1000L, localDate = "2026-10-14"))
         repository.add(sampleExpense(id = "2", amount = 2000L, localDate = "2026-10-15"))
 
-        repository.observeTotal("2026-10-01", "2026-10-31").test {
+        repository.observeTotal("2026-10-01", "2026-10-31", currency = "USD").test {
             assertEquals(3000L, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 
-        repository.observeByCategory("2026-10-01", "2026-10-31").test {
+        repository.observeByCategory("2026-10-01", "2026-10-31", currency = "USD").test {
             val categories = awaitItem()
             assertEquals(1, categories.size)
             assertEquals("food", categories[0].categoryId)
@@ -136,7 +136,7 @@ class ExpenseRepositoryTest {
             cancelAndIgnoreRemainingEvents()
         }
 
-        repository.observeBuckets("2026-10-01", "2026-10-31", len = 10).test {
+        repository.observeBuckets("2026-10-01", "2026-10-31", len = 10, currency = "USD").test {
             val buckets = awaitItem()
             assertEquals(2, buckets.size)
             assertEquals("2026-10-14", buckets[0].bucket)
@@ -145,5 +145,9 @@ class ExpenseRepositoryTest {
             assertEquals(2000L, buckets[1].total)
             cancelAndIgnoreRemainingEvents()
         }
+
+        // Test getAll
+        val all = repository.getAll()
+        assertEquals(2, all.size)
     }
 }

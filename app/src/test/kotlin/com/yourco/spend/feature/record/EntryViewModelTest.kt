@@ -162,10 +162,11 @@ private class FakeExpenseRepo : ExpenseRepository {
     override suspend fun softDelete(id: String, now: Long?) {}
     override suspend fun restore(id: String) {}
     override fun observeDay(date: String): Flow<List<ExpenseEntity>> = MutableStateFlow(addedExpenses)
-    override fun observeTotal(from: String, to: String): Flow<Long> = MutableStateFlow(addedExpenses.sumOf { it.amountMinor })
-    override fun observeByCategory(from: String, to: String): Flow<List<CategoryTotal>> = MutableStateFlow(emptyList())
-    override fun observeBuckets(from: String, to: String, len: Int): Flow<List<BucketTotal>> = MutableStateFlow(emptyList())
+    override fun observeTotal(from: String, to: String, currency: String): Flow<Long> = MutableStateFlow(addedExpenses.filter { it.currency == currency }.sumOf { it.amountMinor })
+    override fun observeByCategory(from: String, to: String, currency: String): Flow<List<CategoryTotal>> = MutableStateFlow(emptyList())
+    override fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<BucketTotal>> = MutableStateFlow(emptyList())
     override suspend fun getById(id: String): ExpenseEntity? = addedExpenses.find { it.id == id }
+    override suspend fun getAll(): List<ExpenseEntity> = addedExpenses
 }
 
 private class FakeCategoryRepo : CategoryRepository {
@@ -173,6 +174,7 @@ private class FakeCategoryRepo : CategoryRepository {
 
     override fun observeAll(): Flow<List<CategoryEntity>> = categories
     override fun observeActive(): Flow<List<CategoryEntity>> = categories
+    override suspend fun getAll(): List<CategoryEntity> = categories.value
     override suspend fun getById(id: String): CategoryEntity? = categories.value.find { it.id == id }
     override suspend fun seedDefaultsIfEmpty() {}
     override suspend fun updateNameOverride(id: String, nameOverride: String?) {}
