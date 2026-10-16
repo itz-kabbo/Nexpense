@@ -25,18 +25,7 @@ data class CategoryEntity(
     @ColumnInfo(name = "is_builtin")
     val isBuiltin: Boolean = true,
 ) {
-    fun defaultNameRes(): Int? = when (id) {
-        CATEGORY_FOOD -> R.string.category_food
-        CATEGORY_GROCERIES -> R.string.category_groceries
-        CATEGORY_TRANSPORT -> R.string.category_transport
-        CATEGORY_SHOPPING -> R.string.category_shopping
-        CATEGORY_HOME -> R.string.category_home
-        CATEGORY_HEALTH -> R.string.category_health
-        CATEGORY_FUN -> R.string.category_fun
-        CATEGORY_TRAVEL -> R.string.category_travel
-        CATEGORY_OTHER -> R.string.category_other
-        else -> null
-    }
+    fun defaultNameRes(): Int? = defaultNameRes(id)
 
     companion object {
         const val CATEGORY_FOOD = "food"
@@ -48,6 +37,19 @@ data class CategoryEntity(
         const val CATEGORY_FUN = "fun"
         const val CATEGORY_TRAVEL = "travel"
         const val CATEGORY_OTHER = "other"
+
+        fun defaultNameRes(id: String): Int? = when (id) {
+            CATEGORY_FOOD -> R.string.category_food
+            CATEGORY_GROCERIES -> R.string.category_groceries
+            CATEGORY_TRANSPORT -> R.string.category_transport
+            CATEGORY_SHOPPING -> R.string.category_shopping
+            CATEGORY_HOME -> R.string.category_home
+            CATEGORY_HEALTH -> R.string.category_health
+            CATEGORY_FUN -> R.string.category_fun
+            CATEGORY_TRAVEL -> R.string.category_travel
+            CATEGORY_OTHER -> R.string.category_other
+            else -> null
+        }
 
         // VERIFY: Built-in categories list (food, groceries, transport, shopping, home, health, fun, travel, other).
         val DEFAULT_CATEGORIES: List<CategoryEntity> = listOf(

@@ -14,6 +14,7 @@ sealed interface EntryPreview {
         val categoryId: String,
         val categoryName: String,
         val confidence: Confidence,
+        val categoryNameRes: Int? = CategoryEntity.defaultNameRes(categoryId),
     ) : EntryPreview
 }
 

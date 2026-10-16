@@ -212,17 +212,6 @@ fun TodayContent(
 
 @Composable
 fun resolveCategoryDisplayName(categoryId: String): String {
-    val resId = when (categoryId) {
-        CategoryEntity.CATEGORY_FOOD -> R.string.category_food
-        CategoryEntity.CATEGORY_GROCERIES -> R.string.category_groceries
-        CategoryEntity.CATEGORY_TRANSPORT -> R.string.category_transport
-        CategoryEntity.CATEGORY_SHOPPING -> R.string.category_shopping
-        CategoryEntity.CATEGORY_HOME -> R.string.category_home
-        CategoryEntity.CATEGORY_HEALTH -> R.string.category_health
-        CategoryEntity.CATEGORY_FUN -> R.string.category_fun
-        CategoryEntity.CATEGORY_TRAVEL -> R.string.category_travel
-        CategoryEntity.CATEGORY_OTHER -> R.string.category_other
-        else -> null
-    }
+    val resId = CategoryEntity.defaultNameRes(categoryId)
     return if (resId != null) stringResource(resId) else categoryId
 }

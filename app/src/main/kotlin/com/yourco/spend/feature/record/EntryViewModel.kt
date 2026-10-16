@@ -1,5 +1,6 @@
 package com.yourco.spend.feature.record
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yourco.spend.core.money.formatMinor
@@ -34,10 +35,14 @@ class EntryViewModel @Inject constructor(
     private val learnedMappingRepository: LearnedMappingRepository,
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
 
-    private val _text = MutableStateFlow("")
-    val text: StateFlow<String> = _text.asStateFlow()
+    companion object {
+        const val KEY_TYPED_TEXT = "typed_text"
+    }
+
+    val text: StateFlow<String> = savedStateHandle.getStateFlow(KEY_TYPED_TEXT, "")
 
     private val _preview = MutableStateFlow<EntryPreview>(EntryPreview.Empty)
     val preview: StateFlow<EntryPreview> = _preview.asStateFlow()
@@ -54,6 +59,8 @@ class EntryViewModel @Inject constructor(
     private val _confirmHapticEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val confirmHapticEvents: SharedFlow<Unit> = _confirmHapticEvents.asSharedFlow()
 
+    private var activeParser: ExpenseParser = expenseParser
+
     init {
         viewModelScope.launch {
             categoryRepository.seedDefaultsIfEmpty()
@@ -61,25 +68,31 @@ class EntryViewModel @Inject constructor(
         viewModelScope.launch {
             categoryRepository.observeActive().collect { activeCategories ->
                 _categories.value = activeCategories
-                recomputePreview(_text.value)
+                recomputePreview(text.value)
             }
         }
         viewModelScope.launch {
             settingsRepository.currencyCode.collect { code ->
                 _currencyCode.value = code
-                recomputePreview(_text.value)
+                recomputePreview(text.value)
             }
         }
         viewModelScope.launch {
             learnedMappingRepository.observeAllAsMap().collect { map ->
-                expenseParser.learned = { note -> map[note] }
-                recomputePreview(_text.value)
+                activeParser = ExpenseParser(
+                    lexicon = expenseParser.lexicon,
+                    learned = { note -> map[note] ?: expenseParser.learned(note) },
+                )
+                recomputePreview(text.value)
             }
+        }
+        if (text.value.isNotBlank()) {
+            recomputePreview(text.value)
         }
     }
 
     fun onTextChange(newText: String) {
-        _text.value = newText
+        savedStateHandle[KEY_TYPED_TEXT] = newText
         if (newText.isBlank()) {
             _selectedCategoryOverride.value = null
         }
@@ -88,14 +101,14 @@ class EntryViewModel @Inject constructor(
 
     fun onCategoryPicked(categoryId: String) {
         _selectedCategoryOverride.value = categoryId
-        recomputePreview(_text.value)
+        recomputePreview(text.value)
     }
 
     fun submit(): Boolean {
         val currentPreview = _preview.value
         if (currentPreview !is EntryPreview.Valid) return false
 
-        val raw = _text.value
+        val raw = text.value
         val amountMinor = currentPreview.amountMinor
         val note = currentPreview.note
         val categoryId = currentPreview.categoryId
@@ -125,7 +138,7 @@ class EntryViewModel @Inject constructor(
             _confirmHapticEvents.tryEmit(Unit)
         }
 
-        _text.value = ""
+        savedStateHandle[KEY_TYPED_TEXT] = ""
         _selectedCategoryOverride.value = null
         _preview.value = EntryPreview.Empty
         return true
@@ -139,7 +152,7 @@ class EntryViewModel @Inject constructor(
         }
 
         val digits = fractionDigits(_currencyCode.value)
-        val result = expenseParser.parse(trimmed, digits)
+        val result = activeParser.parse(trimmed, digits)
         when (result) {
             is ParseResult.NoAmount -> {
                 _preview.value = EntryPreview.NeedsAmount()
@@ -158,6 +171,7 @@ class EntryViewModel @Inject constructor(
                     categoryId = categoryId,
                     categoryName = categoryName,
                     confidence = parsed.confidence,
+                    categoryNameRes = categoryEntity?.defaultNameRes() ?: CategoryEntity.defaultNameRes(categoryId),
                 )
             }
         }

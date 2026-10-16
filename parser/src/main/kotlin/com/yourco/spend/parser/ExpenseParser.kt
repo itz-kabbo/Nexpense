@@ -6,10 +6,9 @@ import java.text.Normalizer
 import java.util.regex.Pattern
 
 class ExpenseParser(
-    private val lexicon: Lexicon = Lexicon.default,
-    learned: (normalizedNote: String) -> String? = { null },
+    val lexicon: Lexicon = Lexicon.default,
+    val learned: (normalizedNote: String) -> String? = { null },
 ) {
-    var learned: (normalizedNote: String) -> String? = learned
 
     companion object {
         private val currencyMarks = Regex("""(?:NT|US)?[$¥€£₩]|[元塊]""", RegexOption.IGNORE_CASE)
