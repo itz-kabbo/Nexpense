@@ -7,8 +7,10 @@ import java.util.regex.Pattern
 
 class ExpenseParser(
     private val lexicon: Lexicon = Lexicon.default,
-    private val learned: (normalizedNote: String) -> String? = { null },
+    learned: (normalizedNote: String) -> String? = { null },
 ) {
+    var learned: (normalizedNote: String) -> String? = learned
+
     companion object {
         private val currencyMarks = Regex("""(?:NT|US)?[$¥€£₩]|[元塊]""", RegexOption.IGNORE_CASE)
         private val spaces = Regex("""[ ]+""")

@@ -1,11 +1,13 @@
 package com.yourco.spend
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import com.yourco.spend.feature.record.RecordScreen
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    Box(modifier = Modifier.fillMaxSize())
+    RecordScreen()
 }
+
+

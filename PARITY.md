@@ -17,3 +17,7 @@ When implementing defaults, flag with `// VERIFY:` comments in code.
 | Currency | Changing currency | Default from locale, affects new entries only | Proposed | Verify how original handles multiple currencies |
 | Spacing | Grid & Margins | 4dp grid, 24dp screen horizontal padding | Proposed | Verify padding values in iOS app |
 | Receipt | Perforation Teeth | 6dp tooth width with triangular teeth | Proposed | Check tooth size and shape in iOS receipt |
+| Record | Today Date Format | "EEEE, MMM d" in user locale | Proposed | Verify today's date format pattern on iOS |
+| Record | Sheet Peek Height | 56dp + navigation bar bottom inset | Proposed | Verify peek height of entry sheet on iOS |
+| Entry | Text Field Style | Single line, transparent background, headline font | Proposed | Verify input field styling in entry sheet on iOS |
+| Top Bar | Settings Icon | Material Symbols rounded Settings icon | Proposed | Verify icon and placement on iOS |

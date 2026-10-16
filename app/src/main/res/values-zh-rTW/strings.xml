@@ -29,5 +29,14 @@
     <string name="category_other">其他</string>
     <string name="receipt_sample_title">MOTE 日收據</string>
     <string name="receipt_sample_total">總計</string>
+    <string name="entry_hint">輸入花費，例如 6 咖啡</string>
+    <string name="entry_need_amount">請加上金額，例如 6 咖啡</string>
+    <string name="empty_today">今天還沒有紀錄。向上滑動。</string>
+    <string name="cd_settings">設定</string>
+    <string name="cd_close">關閉</string>
+    <string name="picker_select_category">選擇分類</string>
+    <string name="settings_appearance">外觀（系統、淺色、深色）</string>
+    <string name="deleted">已刪除</string>
+    <string name="undo">復原</string>
 </resources>
 

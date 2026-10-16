@@ -36,3 +36,39 @@ fun fractionDigits(currencyCode: String): Int {
         2
     }
 }
+
+/**
+ * Formats only the numerical digits of the amount according to fraction digits and locale,
+ * without currency symbol (useful for BigAmount).
+ */
+fun formatAmountDigits(
+    minor: Long,
+    currencyCode: String,
+    locale: Locale = Locale.getDefault(),
+): String {
+    val cur = try {
+        Currency.getInstance(currencyCode)
+    } catch (_: Exception) {
+        Currency.getInstance("USD")
+    }
+    val digits = cur.defaultFractionDigits.coerceAtLeast(0)
+    val nf = NumberFormat.getNumberInstance(locale).apply {
+        minimumFractionDigits = digits
+        maximumFractionDigits = digits
+    }
+    return nf.format(BigDecimal.valueOf(minor, digits))
+}
+
+/**
+ * Returns the currency symbol for the given currency code in the specified locale.
+ */
+fun currencySymbol(
+    currencyCode: String,
+    locale: Locale = Locale.getDefault(),
+): String {
+    return try {
+        Currency.getInstance(currencyCode).getSymbol(locale)
+    } catch (_: Exception) {
+        "$"
+    }
+}
