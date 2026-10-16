@@ -64,7 +64,9 @@ import com.yourco.spend.R
 import com.yourco.spend.core.designsystem.AppTheme
 import com.yourco.spend.core.designsystem.components.SegmentedControl
 import com.yourco.spend.data.repo.ThemeMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 private val SUPPORTED_CURRENCIES = listOf("USD", "TWD", "EUR", "JPY", "GBP", "CNY", "CAD", "AUD", "HKD", "SGD", "KRW")
@@ -82,6 +84,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val exportSuccessMsg = stringResource(R.string.settings_export_success)
+    val exportFailedMsg = stringResource(R.string.settings_export_failed)
     val importFailedMsg = stringResource(R.string.settings_import_failed)
 
     // File pickers
@@ -91,12 +94,14 @@ fun SettingsScreen(
         if (uri != null) {
             scope.launch {
                 try {
-                    context.contentResolver.openOutputStream(uri)?.use { stream ->
-                        viewModel.exportJson(stream)
-                        snackbarHostState.showSnackbar(exportSuccessMsg)
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri)?.use { stream ->
+                            viewModel.exportJson(stream)
+                        }
                     }
+                    snackbarHostState.showSnackbar(exportSuccessMsg)
                 } catch (e: Exception) {
-                    snackbarHostState.showSnackbar(e.message ?: "Export failed")
+                    snackbarHostState.showSnackbar(e.message ?: exportFailedMsg)
                 }
             }
         }
@@ -108,12 +113,14 @@ fun SettingsScreen(
         if (uri != null) {
             scope.launch {
                 try {
-                    context.contentResolver.openOutputStream(uri)?.use { stream ->
-                        viewModel.exportCsv(stream)
-                        snackbarHostState.showSnackbar(exportSuccessMsg)
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri)?.use { stream ->
+                            viewModel.exportCsv(stream)
+                        }
                     }
+                    snackbarHostState.showSnackbar(exportSuccessMsg)
                 } catch (e: Exception) {
-                    snackbarHostState.showSnackbar(e.message ?: "Export failed")
+                    snackbarHostState.showSnackbar(e.message ?: exportFailedMsg)
                 }
             }
         }
@@ -125,19 +132,21 @@ fun SettingsScreen(
         if (uri != null) {
             scope.launch {
                 try {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        val result = viewModel.importData(stream)
-                        if (result.success) {
-                            snackbarHostState.showSnackbar(
-                                context.getString(
-                                    R.string.settings_import_success,
-                                    result.expensesImported,
-                                    result.categoriesImported,
-                                )
-                            )
-                        } else {
-                            snackbarHostState.showSnackbar(result.error ?: importFailedMsg)
+                    val result = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.use { stream ->
+                            viewModel.importData(stream)
                         }
+                    }
+                    if (result != null && result.success) {
+                        snackbarHostState.showSnackbar(
+                            context.getString(
+                                R.string.settings_import_success,
+                                result.expensesImported,
+                                result.categoriesImported,
+                            )
+                        )
+                    } else {
+                        snackbarHostState.showSnackbar(result?.error ?: importFailedMsg)
                     }
                 } catch (e: Exception) {
                     snackbarHostState.showSnackbar(e.message ?: importFailedMsg)
@@ -189,11 +198,12 @@ fun SettingsScreen(
         ) {
             // 1. Appearance Section
             SettingsSectionHeader(title = stringResource(R.string.settings_section_appearance))
-            val appearanceOptions = listOf(
-                stringResource(R.string.theme_system),
-                stringResource(R.string.theme_light),
-                stringResource(R.string.theme_dark),
-            )
+            val sysTheme = stringResource(R.string.theme_system)
+            val lightTheme = stringResource(R.string.theme_light)
+            val darkTheme = stringResource(R.string.theme_dark)
+            val appearanceOptions = remember(sysTheme, lightTheme, darkTheme) {
+                listOf(sysTheme, lightTheme, darkTheme)
+            }
             val selectedThemeIndex = when (state.themeMode) {
                 ThemeMode.SYSTEM -> 0
                 ThemeMode.LIGHT -> 1
@@ -215,11 +225,12 @@ fun SettingsScreen(
 
             // 2. Language Section
             SettingsSectionHeader(title = stringResource(R.string.settings_section_language))
-            val languageOptions = listOf(
-                stringResource(R.string.language_system),
-                stringResource(R.string.language_en),
-                stringResource(R.string.language_zh_tw),
-            )
+            val sysLang = stringResource(R.string.language_system)
+            val enLang = stringResource(R.string.language_en)
+            val zhTwLang = stringResource(R.string.language_zh_tw)
+            val languageOptions = remember(sysLang, enLang, zhTwLang) {
+                listOf(sysLang, enLang, zhTwLang)
+            }
             val selectedLangIndex = when (state.languageTag) {
                 "en" -> 1
                 "zh-TW" -> 2

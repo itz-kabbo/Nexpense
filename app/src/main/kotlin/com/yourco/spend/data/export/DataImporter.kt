@@ -158,10 +158,14 @@ open class DataImporter @Inject constructor(
 
                 val createdAt = localDate.atTime(localTime).atZone(zoneId).toInstant().toEpochMilli()
                 val digits = fractionDigits(currency)
-                val amountMinor = BigDecimal(amountStr)
-                    .setScale(digits, RoundingMode.HALF_UP)
-                    .movePointRight(digits)
-                    .longValueExact()
+                val amountMinor = try {
+                    BigDecimal(amountStr)
+                        .setScale(digits, RoundingMode.HALF_UP)
+                        .movePointRight(digits)
+                        .longValueExact()
+                } catch (_: Exception) {
+                    continue
+                }
 
                 val id = UUID.nameUUIDFromBytes("$dateStr-$timeStr-$amountMinor-$currency-$categoryId-$note".toByteArray(Charsets.UTF_8)).toString()
                 val incoming = ExpenseEntity(

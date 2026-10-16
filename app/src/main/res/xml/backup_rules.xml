@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <include domain="database" path="spend.db" />
-    <include domain="database" path="mote.db" />
+    <include domain="database" path="." />
     <include domain="file" path="datastore/spend_settings.preferences_pb" />
     <include domain="file" path="datastore/mote_settings.preferences_pb" />
     <include domain="sharedpref" path="." />

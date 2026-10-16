@@ -345,4 +345,23 @@ class ExportImportRoundTripTest {
 
         assertEquals(2, expenseDao.getAll().size)
     }
+
+    @Test
+    fun csvImport_skipsMalformedAmountRow_andImportsValidRows() = runTest {
+        val csv = """
+        date,time,amount,currency,category,note
+        2026-10-15,10:00:00,12.50,USD,food,valid coffee
+        2026-10-15,10:05:00,not_a_number,USD,food,broken row
+        2026-10-15,10:10:00,45.00,USD,transport,valid cab
+        """.trimIndent()
+
+        val result = dataImporter.importCsv(csv)
+        assertTrue(result.success)
+        assertEquals(2, result.expensesImported)
+
+        val expenses = expenseDao.getAll()
+        assertEquals(2, expenses.size)
+        assertTrue(expenses.any { it.note == "valid coffee" && it.amountMinor == 1250L })
+        assertTrue(expenses.any { it.note == "valid cab" && it.amountMinor == 4500L })
+    }
 }

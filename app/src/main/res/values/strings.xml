@@ -85,6 +85,7 @@
     <string name="settings_import_success">Imported %1$d expenses, %2$d categories</string>
     <string name="settings_import_failed">Failed to import data</string>
     <string name="settings_export_success">Export successful</string>
+    <string name="settings_export_failed">Export failed</string>
     <string name="settings_section_about">About &amp; Privacy</string>
     <string name="settings_version">Version %1$s</string>
     <string name="settings_privacy_note">100% offline. No internet permission.</string>
