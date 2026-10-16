@@ -12,9 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.yourco.spend.core.designsystem.AppTheme
 
@@ -51,10 +48,6 @@ fun CategoryChip(
             .background(backgroundColor)
             .border(width = 0.5.dp, color = borderColor, shape = AppTheme.shapes.chip)
             .clickable(role = Role.Button, onClick = onClick)
-            .semantics {
-                role = Role.Tab
-                this.selected = selected
-            }
             .padding(horizontal = AppTheme.spacing.l, vertical = AppTheme.spacing.s),
         contentAlignment = Alignment.Center,
     ) {

@@ -50,6 +50,10 @@ fun AppTheme(
 
     val materialColorScheme = if (darkTheme) {
         darkColorScheme(
+            primary = colors.textPrimary,
+            onPrimary = colors.background,
+            secondary = colors.textSecondary,
+            onSecondary = colors.background,
             background = colors.background,
             surface = colors.surface,
             surfaceVariant = colors.paper,
@@ -61,6 +65,10 @@ fun AppTheme(
         )
     } else {
         lightColorScheme(
+            primary = colors.textPrimary,
+            onPrimary = colors.background,
+            secondary = colors.textSecondary,
+            onSecondary = colors.background,
             background = colors.background,
             surface = colors.surface,
             surfaceVariant = colors.paper,

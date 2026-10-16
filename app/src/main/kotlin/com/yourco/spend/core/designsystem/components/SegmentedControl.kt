@@ -5,12 +5,13 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,9 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yourco.spend.core.designsystem.AppTheme
@@ -43,6 +41,7 @@ fun SegmentedControl(
             .fillMaxWidth()
             .clip(AppTheme.shapes.pill)
             .background(AppTheme.colors.surface)
+            .selectableGroup()
             .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -65,7 +64,8 @@ fun SegmentedControl(
                     .defaultMinSize(minHeight = 36.dp)
                     .clip(AppTheme.shapes.pill)
                     .background(backgroundColor)
-                    .clickable(
+                    .selectable(
+                        selected = isSelected,
                         role = Role.Tab,
                         onClick = {
                             if (!isSelected) {
@@ -79,10 +79,6 @@ fun SegmentedControl(
                             }
                         },
                     )
-                    .semantics {
-                        role = Role.Tab
-                        selected = isSelected
-                    }
                     .padding(vertical = AppTheme.spacing.s, horizontal = AppTheme.spacing.m),
                 contentAlignment = Alignment.Center,
             ) {

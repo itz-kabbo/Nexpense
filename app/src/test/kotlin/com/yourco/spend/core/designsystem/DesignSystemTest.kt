@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yourco.spend.core.designsystem.components.calculatePerforatedTeeth
+import com.yourco.spend.core.designsystem.components.clampCategoryFraction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -137,16 +138,14 @@ class DesignSystemTest {
         assertEquals(1, teeth4.count)
         assertEquals(100f, teeth4.toothWidth, 0.001f)
     }
-
     @Test
     fun categoryBarFractionClampingLogic() {
-        fun clamp(fraction: Float): Float = fraction.coerceIn(0f, 1f)
-
-        assertEquals(0f, clamp(-0.5f))
-        assertEquals(1f, clamp(1.5f))
-        assertEquals(0.42f, clamp(0.42f))
-        assertEquals(0f, clamp(0f))
-        assertEquals(1f, clamp(1f))
+        assertEquals(0f, clampCategoryFraction(Float.NaN))
+        assertEquals(0f, clampCategoryFraction(-0.5f))
+        assertEquals(1f, clampCategoryFraction(1.5f))
+        assertEquals(0.42f, clampCategoryFraction(0.42f))
+        assertEquals(0f, clampCategoryFraction(0f))
+        assertEquals(1f, clampCategoryFraction(1f))
     }
 
     @Test

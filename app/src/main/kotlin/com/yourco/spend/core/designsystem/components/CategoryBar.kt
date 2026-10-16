@@ -20,6 +20,12 @@ import androidx.compose.ui.unit.dp
 import com.yourco.spend.core.designsystem.AppTheme
 
 /**
+ * Clamps category bar fraction between 0f and 1f, safely handling NaN as 0f.
+ */
+fun clampCategoryFraction(fraction: Float): Float =
+    if (fraction.isNaN()) 0f else fraction.coerceIn(0f, 1f)
+
+/**
  * Category row with name, amount, percentage, and thin proportional bar.
  * Based on GUIDE.md sections 3.2 and 8b M7.
  */
@@ -31,7 +37,7 @@ fun CategoryBar(
     fraction: Float,
     modifier: Modifier = Modifier,
 ) {
-    val clampedFraction = fraction.coerceIn(0f, 1f)
+    val clampedFraction = clampCategoryFraction(fraction)
     val percentageString = "$percentage%"
     val accessibilityText = "$name, $amount, $percentageString"
 

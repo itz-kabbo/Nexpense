@@ -16,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.yourco.spend.R
@@ -46,7 +45,6 @@ fun EntryHandle(
             )
             .semantics {
                 this.contentDescription = description
-                this.role = Role.Button
             },
         contentAlignment = Alignment.Center,
     ) {
