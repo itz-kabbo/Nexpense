@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.yourco.spend.R
 import com.yourco.spend.core.designsystem.AppTheme
+import com.yourco.spend.feature.insight.InsightScreen
 import com.yourco.spend.feature.receipt.ReceiptScreen
 import com.yourco.spend.feature.record.RecordScreen
 import kotlinx.coroutines.launch
@@ -51,7 +52,7 @@ fun AppRoot(
             when (page) {
                 0 -> RecordScreen(onNavigateToSettings = onNavigateToSettings)
                 1 -> ReceiptScreen()
-                2 -> InsightPlaceholder()
+                2 -> InsightScreen()
             }
         }
 
@@ -112,22 +113,5 @@ internal fun ThreeDotIndicator(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun InsightPlaceholder() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppTheme.colors.background),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = stringResource(R.string.period_month),
-            style = AppTheme.typography.bodySecondary.copy(
-                color = AppTheme.colors.textSecondary,
-            ),
-        )
     }
 }

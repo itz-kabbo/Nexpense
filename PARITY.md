@@ -27,3 +27,7 @@ When implementing defaults, flag with `// VERIFY:` comments in code.
 | Receipt | Items Ordering | Chronological (oldest first like printed shopping slip) | Proposed | Check entry sorting on iOS receipt |
 | Receipt | Date Header Format | "EEEE, MMM d, yyyy" in user locale | Proposed | Check receipt date format on iOS |
 | Receipt | Footer Text | "Every expense is a mote." brand copy | Proposed | Check if original receipt has footer line and exact wording |
+| Insight | Period Labels | "Today"/"Yesterday"/"MMM d, yyyy", "MMMM yyyy", "yyyy" (or localized Chinese patterns) | Proposed | Verify exact date formats across modes on iOS |
+| Insight | Stepper Layout | Centered below BigAmount with `<` Previous, label, `>` Next | Proposed | Verify stepper position, arrows, and font size on iOS |
+| Insight | Year 12-Bar Chart | Canvas-based 12 monthly bars with current month highlighted in primary text | Proposed | Verify 12-bar chart aesthetics and month highlight against iOS |
+| Insight | Month Sparkline | Canvas-based daily mini-bars across 28..31 days with current day highlight | Proposed | Verify daily sparkline / distribution aesthetic on iOS |
