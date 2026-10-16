@@ -18,15 +18,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +56,8 @@ import com.yourco.spend.core.designsystem.components.EntryHandle
 import com.yourco.spend.core.designsystem.components.EntryRow
 import com.yourco.spend.core.money.formatMinor
 import com.yourco.spend.data.db.entity.CategoryEntity
+import com.yourco.spend.data.db.entity.ExpenseEntity
+import com.yourco.spend.feature.edit.EditSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,10 +73,16 @@ fun RecordScreen(
     onNavigateToSettings: (() -> Unit)? = null,
 ) {
     val state by recordVm.state.collectAsStateWithLifecycle()
+    val editingExpense by recordVm.editingExpense.collectAsStateWithLifecycle()
+    val categories by recordVm.categories.collectAsStateWithLifecycle()
+
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val scope = rememberCoroutineScope()
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val deletedMessage = stringResource(R.string.deleted)
+    val undoLabel = stringResource(R.string.undo)
 
     LaunchedEffect(sheetState) {
         snapshotFlow { sheetState.targetValue }.collect { target ->
@@ -86,7 +102,10 @@ fun RecordScreen(
     // VERIFY: Sheet peek height 56dp + navigation bar inset
     BottomSheetScaffold(
         modifier = modifier,
-        scaffoldState = rememberBottomSheetScaffoldState(sheetState),
+        scaffoldState = rememberBottomSheetScaffoldState(
+            bottomSheetState = sheetState,
+            snackbarHostState = snackbarHostState,
+        ),
         sheetPeekHeight = 56.dp + bottomInset,
         sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         sheetContainerColor = AppTheme.colors.surface,
@@ -100,21 +119,53 @@ fun RecordScreen(
                 onSaved = { scope.launch { sheetState.partialExpand() } },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = AppTheme.colors.background,
     ) { padding ->
         TodayContent(
             state = state,
             onSettingsClick = onNavigateToSettings ?: {},
+            onExpenseClick = { expense -> recordVm.startEditing(expense) },
+            onDeleteExpense = { expense ->
+                recordVm.deleteExpense(expense)
+                scope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    val result = snackbarHostState.showSnackbar(
+                        message = deletedMessage,
+                        actionLabel = undoLabel,
+                        duration = SnackbarDuration.Short,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        recordVm.undoDelete(expense.id)
+                    }
+                }
+            },
             modifier = Modifier.padding(padding),
+        )
+    }
+
+    if (editingExpense != null) {
+        EditSheet(
+            expense = editingExpense!!,
+            categories = categories,
+            onSave = { updated ->
+                recordVm.updateExpense(updated)
+            },
+            onDismiss = {
+                recordVm.clearEditing()
+            },
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayContent(
     state: RecordUiState,
     modifier: Modifier = Modifier,
     onSettingsClick: () -> Unit = {},
+    onExpenseClick: (ExpenseEntity) -> Unit = {},
+    onDeleteExpense: (ExpenseEntity) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -195,14 +246,53 @@ fun TodayContent(
                     items = state.expenses,
                     key = { it.id },
                 ) { expense ->
-                    val categoryName = resolveCategoryDisplayName(expense.categoryId)
-                    val note = expense.note.ifBlank { categoryName }
-                    val formatted = formatMinor(expense.amountMinor, expense.currency)
-                    EntryRow(
-                        note = note,
-                        category = categoryName,
-                        amount = formatted,
-                        showDivider = true,
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = { dismissValue ->
+                            if (dismissValue == SwipeToDismissBoxValue.EndToStart || dismissValue == SwipeToDismissBoxValue.StartToEnd) {
+                                onDeleteExpense(expense)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                    )
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        backgroundContent = {
+                            val alignment = if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                                Alignment.CenterStart
+                            } else {
+                                Alignment.CenterEnd
+                            }
+                            // VERIFY: Swipe to delete background uses hairline color and secondary delete icon
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(AppTheme.colors.hairline)
+                                    .padding(horizontal = AppTheme.spacing.screenHorizontal),
+                                contentAlignment = alignment,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = stringResource(R.string.cd_delete),
+                                    tint = AppTheme.colors.textSecondary,
+                                )
+                            }
+                        },
+                        content = {
+                            val categoryName = resolveCategoryDisplayName(expense.categoryId)
+                            val note = expense.note.ifBlank { categoryName }
+                            val formatted = formatMinor(expense.amountMinor, expense.currency)
+                            EntryRow(
+                                note = note,
+                                category = categoryName,
+                                amount = formatted,
+                                onClick = { onExpenseClick(expense) },
+                                showDivider = true,
+                                modifier = Modifier.background(AppTheme.colors.background),
+                            )
+                        },
                     )
                 }
             }

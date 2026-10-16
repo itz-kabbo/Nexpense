@@ -21,3 +21,6 @@ When implementing defaults, flag with `// VERIFY:` comments in code.
 | Record | Sheet Peek Height | 56dp + navigation bar bottom inset | Proposed | Verify peek height of entry sheet on iOS |
 | Entry | Text Field Style | Single line, transparent background, headline font | Proposed | Verify input field styling in entry sheet on iOS |
 | Top Bar | Settings Icon | Material Symbols rounded Settings icon | Proposed | Verify icon and placement on iOS |
+| Record | Swipe to Delete Style | Hairline background with secondary text Delete icon | Proposed | Verify swipe gesture threshold, direction, and background appearance |
+| Edit | Sheet Layout | ModalBottomSheet with 28dp top radius, surface background | Proposed | Verify layout, fields order, and modal vs standard presentation |
+| Edit | Date Selection | Clickable row displaying ISO date, opens DatePicker | Proposed | Verify date picker style and inline vs dialog picker |
