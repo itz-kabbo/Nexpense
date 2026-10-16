@@ -1,3 +1,27 @@
 <resources>
     <string name="app_name">Mote</string>
+    <string name="cd_add_expense">Add expense</string>
+    <string name="gallery_title">Component Gallery</string>
+    <string name="gallery_section_tokens">Design Tokens</string>
+    <string name="gallery_section_big_amount">Big Amount</string>
+    <string name="gallery_section_entry_row">Entry Row</string>
+    <string name="gallery_section_category_chip">Category Chip</string>
+    <string name="gallery_section_entry_handle">Entry Handle</string>
+    <string name="gallery_section_leader_row">Leader Row</string>
+    <string name="gallery_section_dashed_rule">Dashed Rule</string>
+    <string name="gallery_section_perforated_shape">Perforated Receipt</string>
+    <string name="gallery_section_segmented_control">Segmented Control</string>
+    <string name="gallery_section_category_bar">Category Bar</string>
+    <string name="period_day">Day</string>
+    <string name="period_month">Month</string>
+    <string name="period_year">Year</string>
+    <string name="sample_note_coffee">Coffee</string>
+    <string name="sample_note_lunch">Lunch</string>
+    <string name="sample_note_groceries">Groceries</string>
+    <string name="category_food">Food &amp; Drink</string>
+    <string name="category_groceries">Groceries</string>
+    <string name="category_transport">Transport</string>
+    <string name="receipt_sample_title">MOTE DAILY RECEIPT</string>
+    <string name="receipt_sample_total">TOTAL</string>
 </resources>
+

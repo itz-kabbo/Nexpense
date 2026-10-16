@@ -1,3 +1,27 @@
 <resources>
     <string name="app_name">Mote</string>
+    <string name="cd_add_expense">新增支出</string>
+    <string name="gallery_title">組件展示</string>
+    <string name="gallery_section_tokens">設計語彙</string>
+    <string name="gallery_section_big_amount">大金額</string>
+    <string name="gallery_section_entry_row">條目行</string>
+    <string name="gallery_section_category_chip">分類標籤</string>
+    <string name="gallery_section_entry_handle">拉桿手柄</string>
+    <string name="gallery_section_leader_row">對齊行</string>
+    <string name="gallery_section_dashed_rule">虛線分割</string>
+    <string name="gallery_section_perforated_shape">收據穿孔邊緣</string>
+    <string name="gallery_section_segmented_control">分段控制器</string>
+    <string name="gallery_section_category_bar">分類進度條</string>
+    <string name="period_day">日</string>
+    <string name="period_month">月</string>
+    <string name="period_year">年</string>
+    <string name="sample_note_coffee">咖啡</string>
+    <string name="sample_note_lunch">午餐</string>
+    <string name="sample_note_groceries">超市買菜</string>
+    <string name="category_food">餐飲</string>
+    <string name="category_groceries">超市</string>
+    <string name="category_transport">交通</string>
+    <string name="receipt_sample_title">MOTE 日收據</string>
+    <string name="receipt_sample_total">總計</string>
 </resources>
+

@@ -15,3 +15,5 @@ When implementing defaults, flag with `// VERIFY:` comments in code.
 | Receipt | Print Animation | Rows revealed top-to-bottom over ~500ms | Proposed | Check if original animates receipt opening |
 | Multi-item | Multiple entries | Split on newlines, semicolons, Chinese commas, ASCII comma + space | Proposed | Verify whether iOS app supports multi-item entry |
 | Currency | Changing currency | Default from locale, affects new entries only | Proposed | Verify how original handles multiple currencies |
+| Spacing | Grid & Margins | 4dp grid, 24dp screen horizontal padding | Proposed | Verify padding values in iOS app |
+| Receipt | Perforation Teeth | 6dp tooth width with triangular teeth | Proposed | Check tooth size and shape in iOS receipt |
