@@ -12,4 +12,7 @@ data class RecordUiState(
     val amountString: String = "0.00",
     val expenses: List<ExpenseEntity> = emptyList(),
     val currencyCode: String = "USD",
-)
+) {
+    val formattedDate: String get() = todayDateLabel
+    val todayExpenses: List<ExpenseEntity> get() = expenses
+}

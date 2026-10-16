@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +58,22 @@ fun EntrySheet(
     focusRequester: FocusRequester = remember { FocusRequester() },
     onSaved: () -> Unit = {},
 ) {
-    val text by viewModel.text.collectAsStateWithLifecycle()
+    val vmText by viewModel.text.collectAsStateWithLifecycle()
+    // GUIDE 8 M4: Keep the typed text in rememberSaveable so rotation does not lose it.
+    var typedText by rememberSaveable { mutableStateOf(vmText) }
+
+    LaunchedEffect(vmText) {
+        if (typedText != vmText) {
+            typedText = vmText
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (typedText.isNotBlank() && typedText != vmText) {
+            viewModel.onTextChange(typedText)
+        }
+    }
+
     val preview by viewModel.preview.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val selectedCategoryOverride by viewModel.selectedCategoryOverride.collectAsStateWithLifecycle()
@@ -81,8 +97,11 @@ fun EntrySheet(
     ) {
         // VERIFY: Entry sheet text field single-line, transparent container, headline style
         TextField(
-            value = text,
-            onValueChange = viewModel::onTextChange,
+            value = typedText,
+            onValueChange = { newText ->
+                typedText = newText
+                viewModel.onTextChange(newText)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
@@ -102,6 +121,7 @@ fun EntrySheet(
                 onDone = {
                     if (preview is EntryPreview.Valid) {
                         viewModel.submit()
+                        typedText = ""
                         onSaved()
                     }
                 }

@@ -63,8 +63,10 @@ class RecordViewModelTest {
         }
         val state = viewModel.state.value
         assertTrue(state.todayDateLabel.contains("Thursday") || state.todayDateLabel.contains("Oct 15") || state.todayDateLabel.contains("15"))
+        assertEquals(state.todayDateLabel, state.formattedDate)
         assertEquals(0L, state.totalMinor)
         assertTrue(state.expenses.isEmpty())
+        assertTrue(state.todayExpenses.isEmpty())
         assertEquals("USD", state.currencyCode)
     }
 
