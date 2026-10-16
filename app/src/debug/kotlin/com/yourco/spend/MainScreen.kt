@@ -8,7 +8,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.yourco.spend.core.designsystem.ComponentGalleryScreen
-import com.yourco.spend.feature.record.RecordScreen
+import com.yourco.spend.navigation.AppRoot
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,7 +19,6 @@ fun MainScreen() {
         BackHandler { showGallery = false }
         ComponentGalleryScreen()
     } else {
-        RecordScreen(onNavigateToSettings = { showGallery = true })
+        AppRoot(onNavigateToSettings = { showGallery = true })
     }
 }
-

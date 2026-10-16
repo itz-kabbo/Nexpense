@@ -12,3 +12,10 @@
 - **Issue:** Launching an OS-level `AlertDialog` inside a `ModalBottomSheet` creates nested `DialogWindow` instances, leading to touch event routing issues and Robolectric window dispatch limitations.
 - **Decision:** Implemented `CategoryPickerDialog` as a surface card modal overlay within `EditSheetContent`, providing a seamless in-sheet selection experience with scrim and card without OS-level multi-window nesting.
 
+## M6: FileProvider Windows JVM Test Fallback in ReceiptImageSaver
+
+- **Context:** `GUIDE.md` section 8b M6 specifies exporting receipt as PNG into `cacheDir` and exposing it via `FileProvider.getUriForFile`.
+- **Issue:** On Windows developer hosts, `androidx.core:core:1.15.0`'s internal `FileProvider.belongsToRoot` hardcodes `'/'` separator checks (`rootPath + '/'`), which fails against Windows local paths using `\` during JVM unit tests in Robolectric. Physical Android devices (Linux) use `/` and succeed.
+- **Decision:** In `ReceiptImageSaver.saveBitmap`, catch `IllegalArgumentException` from `FileProvider.getUriForFile` on Windows JVM test hosts and construct the equivalent `content://$authority/receipts/${file.name}` URI, preserving exact FileProvider behavior on devices while allowing offline unit tests to succeed on Windows.
+
+

@@ -24,3 +24,6 @@ When implementing defaults, flag with `// VERIFY:` comments in code.
 | Record | Swipe to Delete Style | Hairline background with secondary text Delete icon | Proposed | Verify swipe gesture threshold, direction, and background appearance |
 | Edit | Sheet Layout | ModalBottomSheet with 28dp top radius, surface background | Proposed | Verify layout, fields order, and modal vs standard presentation |
 | Edit | Date Selection | Clickable row displaying ISO date, opens DatePicker | Proposed | Verify date picker style and inline vs dialog picker |
+| Receipt | Items Ordering | Chronological (oldest first like printed shopping slip) | Proposed | Check entry sorting on iOS receipt |
+| Receipt | Date Header Format | "EEEE, MMM d, yyyy" in user locale | Proposed | Check receipt date format on iOS |
+| Receipt | Footer Text | "Every expense is a mote." brand copy | Proposed | Check if original receipt has footer line and exact wording |

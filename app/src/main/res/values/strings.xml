@@ -47,5 +47,11 @@
     <string name="category">Category</string>
     <string name="select_date">Select date</string>
     <string name="cd_delete">Delete</string>
+    <string name="receipt_total">TOTAL</string>
+    <string name="receipt_empty">No expenses for this day</string>
+    <string name="cd_previous_day">Previous day</string>
+    <string name="cd_next_day">Next day</string>
+    <string name="cd_share_receipt">Share receipt</string>
+    <string name="receipt_footer">Every expense is a mote.</string>
 </resources>
 
