@@ -19,6 +19,7 @@ fun calculatePerforatedTeeth(width: Float, toothPx: Float): PerforatedTeeth {
     return PerforatedTeeth(count = n, toothWidth = w)
 }
 
+// VERIFY: Receipt perforated teeth proposed default (6dp tooth width with triangular teeth)
 /**
  * Creates a perforated Shape with triangular teeth along top and bottom edges.
  * From GUIDE.md section 8b M6 skeleton.

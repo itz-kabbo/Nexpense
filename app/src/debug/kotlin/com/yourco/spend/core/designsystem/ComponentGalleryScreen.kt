@@ -14,14 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,7 +41,7 @@ import com.yourco.spend.core.designsystem.components.SegmentedControl
 import com.yourco.spend.core.designsystem.components.rememberPerforatedShape
 
 /**
- * Debug gallery screen displaying all design tokens and primitives together with sample data.
+ * Debug-only gallery screen displaying all design tokens and primitives together with sample data.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

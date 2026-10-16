@@ -33,6 +33,21 @@ class DesignSystemUiTest {
     }
 
     @Test
+    fun galleryRendersInDarkTheme() {
+        composeTestRule.setContent {
+            AppTheme(darkTheme = true) {
+                ComponentGalleryScreen()
+            }
+        }
+
+        // Verify key text nodes are displayed in dark theme
+        composeTestRule.onNodeWithText("Component Gallery").assertIsDisplayed()
+        composeTestRule.onNodeWithText("74.50").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Food & Drink").assertIsDisplayed()
+    }
+
+
+    @Test
     fun galleryRendersInLargeFontScale() {
         composeTestRule.setContent {
             val currentDensity = LocalDensity.current
