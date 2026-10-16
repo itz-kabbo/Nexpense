@@ -104,6 +104,7 @@ class ReceiptViewModel @Inject constructor(
             selectedDate = initialDate.toString(),
             date = initialDate,
             formattedDate = formatDate(initialDate),
+            formattedTotal = formatMinor(0L, "USD"),
             isEmpty = true,
             canGoForward = initialDate.isBefore(today),
         ),

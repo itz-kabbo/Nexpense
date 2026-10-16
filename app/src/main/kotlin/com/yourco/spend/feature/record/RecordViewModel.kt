@@ -1,5 +1,6 @@
 package com.yourco.spend.feature.record
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yourco.spend.core.money.currencySymbol
@@ -36,8 +37,13 @@ class RecordViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val learnedMappingRepository: LearnedMappingRepository,
     private val clock: Clock,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
     private val todayObserver: TodayObserver = TodayObserver.from(clock),
 ) : ViewModel() {
+
+    companion object {
+        const val KEY_EDITING_EXPENSE_ID = "editing_expense_id"
+    }
 
     // VERIFY: Today date format pattern (defaults to "EEEE, MMM d" in user's locale)
     private fun formatTodayDate(date: LocalDate, locale: Locale = Locale.getDefault()): String {
@@ -92,14 +98,22 @@ class RecordViewModel @Inject constructor(
         viewModelScope.launch {
             categoryRepository.seedDefaultsIfEmpty()
         }
+        val restoredEditingId = savedStateHandle.get<String>(KEY_EDITING_EXPENSE_ID)
+        if (restoredEditingId != null) {
+            viewModelScope.launch {
+                _editingExpense.value = expenseRepository.getById(restoredEditingId)
+            }
+        }
     }
 
     fun startEditing(expense: ExpenseEntity) {
         _editingExpense.value = expense
+        savedStateHandle[KEY_EDITING_EXPENSE_ID] = expense.id
     }
 
     fun clearEditing() {
         _editingExpense.value = null
+        savedStateHandle.remove<String>(KEY_EDITING_EXPENSE_ID)
     }
 
     fun updateExpense(updated: ExpenseEntity) {
@@ -112,6 +126,7 @@ class RecordViewModel @Inject constructor(
             }
         }
         _editingExpense.value = null
+        savedStateHandle.remove<String>(KEY_EDITING_EXPENSE_ID)
     }
 
     fun deleteExpense(expense: ExpenseEntity) {
