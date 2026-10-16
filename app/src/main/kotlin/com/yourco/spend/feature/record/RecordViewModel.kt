@@ -101,7 +101,12 @@ class RecordViewModel @Inject constructor(
         val restoredEditingId = savedStateHandle.get<String>(KEY_EDITING_EXPENSE_ID)
         if (restoredEditingId != null) {
             viewModelScope.launch {
-                _editingExpense.value = expenseRepository.getById(restoredEditingId)
+                val expense = expenseRepository.getById(restoredEditingId)
+                if (expense != null) {
+                    _editingExpense.value = expense
+                } else {
+                    savedStateHandle.remove<String>(KEY_EDITING_EXPENSE_ID)
+                }
             }
         }
     }
@@ -130,6 +135,9 @@ class RecordViewModel @Inject constructor(
     }
 
     fun deleteExpense(expense: ExpenseEntity) {
+        if (_editingExpense.value?.id == expense.id) {
+            clearEditing()
+        }
         viewModelScope.launch {
             expenseRepository.softDelete(expense.id, clock.millis())
         }
