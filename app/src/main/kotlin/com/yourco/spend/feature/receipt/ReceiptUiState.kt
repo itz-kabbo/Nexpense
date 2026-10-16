@@ -10,6 +10,7 @@ import java.time.LocalDate
 data class ReceiptItemUiModel(
     val id: String,
     val note: String,
+    val noteRes: Int? = null,
     val categoryId: String = "",
     val amountMinor: Long,
     val formattedAmount: String,

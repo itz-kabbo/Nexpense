@@ -1,6 +1,7 @@
 package com.yourco.spend.feature.receipt
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -38,7 +40,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yourco.spend.R
 import com.yourco.spend.core.designsystem.AppTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ReceiptScreen(
@@ -72,17 +76,20 @@ fun ReceiptScreenContent(
             try {
                 val imageBitmap = graphicsLayer.toImageBitmap()
                 val bitmap = imageBitmap.asAndroidBitmap()
-                val uri = ReceiptImageSaver.saveBitmap(context, bitmap, state.selectedDate)
+                val uri = withContext(Dispatchers.IO) {
+                    ReceiptImageSaver.saveBitmap(context, bitmap, state.selectedDate)
+                }
+                val shareSubject = context.getString(R.string.app_name) + " - " + state.formattedDate
                 val shareIntent = ReceiptImageSaver.createShareIntent(
                     uri = uri,
-                    subject = "Mote - ${state.formattedDate}",
+                    subject = shareSubject,
                 )
                 val chooser = Intent.createChooser(shareIntent, null).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(chooser)
-            } catch (_: Exception) {
-                // Ignore error if share activity cannot be started in test or headless environment
+            } catch (e: Exception) {
+                Log.w("ReceiptScreen", "Failed to share receipt", e)
             }
         }
     }
@@ -90,7 +97,8 @@ fun ReceiptScreenContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(AppTheme.colors.background),
+            .background(AppTheme.colors.background)
+            .navigationBarsPadding(),
     ) {
         // Top bar with navigation (< Previous, Date, Next >) and Share button
         Row(
@@ -183,8 +191,10 @@ fun ReceiptScreenContent(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(
-                        horizontal = AppTheme.spacing.screenHorizontal,
-                        vertical = AppTheme.spacing.m,
+                        start = AppTheme.spacing.screenHorizontal,
+                        top = AppTheme.spacing.m,
+                        end = AppTheme.spacing.screenHorizontal,
+                        bottom = AppTheme.spacing.xxl + 32.dp,
                     ),
                 contentAlignment = Alignment.TopCenter,
             ) {

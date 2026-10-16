@@ -23,6 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.yourco.spend.R
 import com.yourco.spend.core.designsystem.AppTheme
@@ -69,14 +72,14 @@ fun AppRoot(
 }
 
 @Composable
-private fun ThreeDotIndicator(
+internal fun ThreeDotIndicator(
     pagerState: PagerState,
     modifier: Modifier = Modifier,
     onDotClick: (Int) -> Unit = {},
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         repeat(pagerState.pageCount) { index ->
@@ -86,16 +89,28 @@ private fun ThreeDotIndicator(
             } else {
                 AppTheme.colors.hairline
             }
+            val pageDescription = stringResource(R.string.cd_page_n, index + 1)
             Box(
                 modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(color)
+                    .size(48.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                    ) { onDotClick(index) },
-            )
+                        role = Role.Tab,
+                        onClickLabel = pageDescription,
+                    ) { onDotClick(index) }
+                    .semantics {
+                        contentDescription = pageDescription
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(color),
+                )
+            }
         }
     }
 }

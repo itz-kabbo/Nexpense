@@ -53,5 +53,6 @@
     <string name="cd_next_day">後一天</string>
     <string name="cd_share_receipt">分享收據</string>
     <string name="receipt_footer">每一筆花費都是微塵。</string>
+    <string name="cd_page_n">第 %1$d 頁</string>
 </resources>
 

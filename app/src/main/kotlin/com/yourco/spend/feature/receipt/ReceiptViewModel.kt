@@ -3,6 +3,7 @@ package com.yourco.spend.feature.receipt
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yourco.spend.R
 import com.yourco.spend.core.money.formatMinor
 import com.yourco.spend.data.db.entity.CategoryEntity
 import com.yourco.spend.data.repo.ExpenseRepository
@@ -40,7 +41,8 @@ class ReceiptViewModel @Inject constructor(
 
     private val initialDate: LocalDate = savedStateHandle.get<String>(KEY_SELECTED_DATE)?.let {
         try {
-            LocalDate.parse(it)
+            val parsed = LocalDate.parse(it)
+            if (parsed.isAfter(today)) today else parsed
         } catch (_: Exception) {
             null
         }
@@ -66,11 +68,15 @@ class ReceiptViewModel @Inject constructor(
                 // VERIFY: Receipt items ordering chronological (oldest first like printed shopping slip)
                 val items = expenses.reversed().map { expense ->
                     val categoryDefaultRes = CategoryEntity.defaultNameRes(expense.categoryId)
-                    val fallbackNote = if (categoryDefaultRes != null) expense.categoryId else "other"
-                    val displayNote = expense.note.ifBlank { fallbackNote }
+                    val noteRes = if (expense.note.isBlank()) {
+                        categoryDefaultRes ?: R.string.category_other
+                    } else {
+                        null
+                    }
                     ReceiptItemUiModel(
                         id = expense.id,
-                        note = displayNote,
+                        note = expense.note,
+                        noteRes = noteRes,
                         categoryId = expense.categoryId,
                         amountMinor = expense.amountMinor,
                         formattedAmount = formatMinor(expense.amountMinor, expense.currency, locale),

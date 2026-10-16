@@ -60,7 +60,7 @@ fun ReceiptCard(
         // Body: one line per entry with LeaderRow (leader dots between note and formatted amount)
         state.items.forEach { item ->
             LeaderRow(
-                label = item.note,
+                label = item.noteRes?.let { stringResource(it) } ?: item.note,
                 amount = item.formattedAmount,
                 style = AppTheme.typography.receipt,
                 modifier = Modifier.padding(vertical = AppTheme.spacing.xxs),

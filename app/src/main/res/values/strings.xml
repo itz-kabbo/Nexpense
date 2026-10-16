@@ -53,5 +53,6 @@
     <string name="cd_next_day">Next day</string>
     <string name="cd_share_receipt">Share receipt</string>
     <string name="receipt_footer">Every expense is a mote.</string>
+    <string name="cd_page_n">Page %1$d</string>
 </resources>
 

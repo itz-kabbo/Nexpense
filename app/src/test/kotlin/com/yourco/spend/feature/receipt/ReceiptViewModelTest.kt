@@ -18,9 +18,11 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import com.yourco.spend.R
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -238,6 +240,101 @@ class ReceiptViewModelTest {
         assertEquals("EUR", state.currencyCode)
         assertEquals(1500L, state.totalMinor)
         assertTrue(state.formattedTotal.contains("15") || state.formattedTotal.contains("€"))
+    }
+
+    @Test
+    fun savedStateHandle_futureDate_clampsToToday() = runTest(testDispatcher) {
+        val vm = ReceiptViewModel(
+            expenseRepository = fakeExpenseRepo,
+            settingsRepository = fakeSettingsRepo,
+            clock = fixedClock,
+            savedStateHandle = SavedStateHandle(mapOf(ReceiptViewModel.KEY_SELECTED_DATE to "2026-10-25")),
+        )
+        val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.state.collect {}
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Clock is fixed to 2026-10-15, so 2026-10-25 is clamped to 2026-10-15
+        assertEquals("2026-10-15", vm.state.value.selectedDate)
+        assertFalse(vm.state.value.canGoForward)
+    }
+
+    @Test
+    fun savedStateHandle_pastDate_restoresPastDate() = runTest(testDispatcher) {
+        val vm = ReceiptViewModel(
+            expenseRepository = fakeExpenseRepo,
+            settingsRepository = fakeSettingsRepo,
+            clock = fixedClock,
+            savedStateHandle = SavedStateHandle(mapOf(ReceiptViewModel.KEY_SELECTED_DATE to "2026-10-10")),
+        )
+        val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.state.collect {}
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("2026-10-10", vm.state.value.selectedDate)
+        assertTrue(vm.state.value.canGoForward)
+    }
+
+    @Test
+    fun blankExpenseNote_resolvesToCategoryStringResource() = runTest(testDispatcher) {
+        val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.state.collect {}
+        }
+        val date = "2026-10-15"
+        val expenses = listOf(
+            ExpenseEntity(
+                id = "e1",
+                amountMinor = 1200,
+                currency = "USD",
+                note = "",
+                rawText = "12",
+                categoryId = "food",
+                createdAt = 1000L,
+                localDate = date,
+                updatedAt = 1000L,
+            ),
+            ExpenseEntity(
+                id = "e2",
+                amountMinor = 3000,
+                currency = "USD",
+                note = "   ",
+                rawText = "30",
+                categoryId = "unknown_custom",
+                createdAt = 2000L,
+                localDate = date,
+                updatedAt = 2000L,
+            ),
+            ExpenseEntity(
+                id = "e3",
+                amountMinor = 500,
+                currency = "USD",
+                note = "coffee",
+                rawText = "5 coffee",
+                categoryId = "food",
+                createdAt = 3000L,
+                localDate = date,
+                updatedAt = 3000L,
+            ),
+        )
+        fakeExpenseRepo.setDayData(date, expenses.reversed(), 4700L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(3, state.items.size)
+
+        // e1: blank note -> noteRes is R.string.category_food
+        assertEquals("", state.items[0].note)
+        assertEquals(R.string.category_food, state.items[0].noteRes)
+
+        // e2: whitespace note -> noteRes is R.string.category_other
+        assertEquals("   ", state.items[1].note)
+        assertEquals(R.string.category_other, state.items[1].noteRes)
+
+        // e3: non-blank note -> noteRes is null, note preserved
+        assertEquals("coffee", state.items[2].note)
+        assertNull(state.items[2].noteRes)
     }
 }
 
