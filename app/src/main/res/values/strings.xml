@@ -57,6 +57,8 @@
     <string name="insight_day">Day</string>
     <string name="insight_month">Month</string>
     <string name="insight_year">Year</string>
+    <string name="insight_today">Today</string>
+    <string name="insight_yesterday">Yesterday</string>
     <string name="insight_empty">No expenses in this period</string>
     <string name="cd_previous_period">Previous period</string>
     <string name="cd_next_period">Next period</string>

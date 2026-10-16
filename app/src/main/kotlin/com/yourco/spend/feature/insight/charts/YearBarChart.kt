@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -81,6 +82,19 @@ fun YearBarChart(
         val barWidth = min(slotWidth * 0.48f, 16.dp.toPx())
         val cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
 
+        val currentMonthStyle = TextStyle(
+            color = primaryColor,
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.SemiBold,
+        )
+        val normalMonthStyle = TextStyle(
+            color = secondaryColor,
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Normal,
+        )
+
         bars.forEachIndexed { index, bar ->
             val slotCenterX = (index + 0.5f) * slotWidth
             val left = slotCenterX - (barWidth / 2f)
@@ -116,13 +130,7 @@ fun YearBarChart(
 
             // Month label beneath baseline
             val labelText = bar.label
-            val isCurrent = bar.isCurrentMonth
-            val labelStyle = androidx.compose.ui.text.TextStyle(
-                color = if (isCurrent) primaryColor else secondaryColor,
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Normal,
-            )
+            val labelStyle = if (bar.isCurrentMonth) currentMonthStyle else normalMonthStyle
             val textLayoutResult = textMeasurer.measure(
                 text = labelText,
                 style = labelStyle,

@@ -57,6 +57,8 @@
     <string name="insight_day">日</string>
     <string name="insight_month">月</string>
     <string name="insight_year">年</string>
+    <string name="insight_today">今天</string>
+    <string name="insight_yesterday">昨天</string>
     <string name="insight_empty">此期間尚無支出</string>
     <string name="cd_previous_period">上一個期間</string>
     <string name="cd_next_period">下一個期間</string>

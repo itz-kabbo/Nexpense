@@ -288,8 +288,19 @@ class InsightViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(InsightMode.DAY, viewModel.state.value.mode)
         assertEquals("Today", viewModel.state.value.periodLabel)
+        assertEquals(R.string.insight_today, viewModel.state.value.periodLabelRes)
         assertTrue(viewModel.state.value.yearBars.isEmpty())
         assertTrue(viewModel.state.value.monthPoints.isEmpty())
+
+        // Navigate to yesterday in DAY mode
+        viewModel.previousPeriod()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(R.string.insight_yesterday, viewModel.state.value.periodLabelRes)
+
+        // Navigate to two days ago in DAY mode
+        viewModel.previousPeriod()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNull(viewModel.state.value.periodLabelRes)
     }
 
     @Test

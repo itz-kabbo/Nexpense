@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -79,6 +80,17 @@ fun MonthSparkline(
         val barWidth = min(slotWidth * 0.55f, 4.dp.toPx())
         val cornerRadius = CornerRadius(1.dp.toPx(), 1.dp.toPx())
 
+        val currentDayStyle = TextStyle(
+            color = primaryColor,
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+        )
+        val normalDayStyle = TextStyle(
+            color = secondaryColor,
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+        )
+
         points.forEachIndexed { index, point ->
             val slotCenterX = (index + 0.5f) * slotWidth
             val left = slotCenterX - (barWidth / 2f)
@@ -121,11 +133,7 @@ fun MonthSparkline(
 
             if (isLandmark) {
                 val labelText = point.dayOfMonth.toString()
-                val labelStyle = androidx.compose.ui.text.TextStyle(
-                    color = if (point.isCurrentDay) primaryColor else secondaryColor,
-                    fontSize = 9.sp,
-                    fontFamily = FontFamily.Monospace,
-                )
+                val labelStyle = if (point.isCurrentDay) currentDayStyle else normalDayStyle
                 val textLayoutResult = textMeasurer.measure(
                     text = labelText,
                     style = labelStyle,

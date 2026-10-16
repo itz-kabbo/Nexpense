@@ -84,6 +84,8 @@ fun next(anchor: LocalDate, mode: InsightMode, today: LocalDate): LocalDate {
 // VERIFY: Date formatting for period labels in Insight screen
 /**
  * Formats a user-facing label for the period.
+ * For DAY mode, relative labels like "Today" and "Yesterday" are also exposed via
+ * [InsightUiState.periodLabelRes] so UI composables can resolve localized strings safely.
  */
 fun formatPeriodLabel(
     mode: InsightMode,
@@ -91,31 +93,18 @@ fun formatPeriodLabel(
     today: LocalDate = LocalDate.now(),
     locale: Locale = Locale.getDefault(),
 ): String = when (mode) {
-    InsightMode.DAY -> {
-        if (anchor.isEqual(today)) {
-            if (locale.language == "zh") "今天" else "Today"
-        } else if (anchor.isEqual(today.minusDays(1))) {
-            if (locale.language == "zh") "昨天" else "Yesterday"
-        } else {
-            if (locale.language == "zh") {
-                anchor.format(DateTimeFormatter.ofPattern("yyyy年M月d日", locale))
-            } else {
-                anchor.format(DateTimeFormatter.ofPattern("MMM d, yyyy", locale))
-            }
-        }
+    InsightMode.DAY -> when {
+        anchor.isEqual(today) -> if (locale.language == "zh") "今天" else "Today"
+        anchor.isEqual(today.minusDays(1)) -> if (locale.language == "zh") "昨天" else "Yesterday"
+        locale.language == "zh" -> anchor.format(DateTimeFormatter.ofPattern("yyyy年M月d日", locale))
+        else -> anchor.format(DateTimeFormatter.ofPattern("MMM d, yyyy", locale))
     }
     InsightMode.MONTH -> {
-        if (locale.language == "zh") {
-            YearMonth.from(anchor).format(DateTimeFormatter.ofPattern("yyyy年M月", locale))
-        } else {
-            YearMonth.from(anchor).format(DateTimeFormatter.ofPattern("MMMM yyyy", locale))
-        }
+        val pattern = if (locale.language == "zh") "yyyy年M月" else "MMMM yyyy"
+        YearMonth.from(anchor).format(DateTimeFormatter.ofPattern(pattern, locale))
     }
     InsightMode.YEAR -> {
-        if (locale.language == "zh") {
-            Year.from(anchor).format(DateTimeFormatter.ofPattern("yyyy年", locale))
-        } else {
-            Year.from(anchor).format(DateTimeFormatter.ofPattern("yyyy", locale))
-        }
+        val pattern = if (locale.language == "zh") "yyyy年" else "yyyy"
+        Year.from(anchor).format(DateTimeFormatter.ofPattern(pattern, locale))
     }
 }

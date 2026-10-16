@@ -3,6 +3,7 @@ package com.yourco.spend.feature.insight
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yourco.spend.R
 import com.yourco.spend.core.money.currencySymbol
 import com.yourco.spend.core.money.formatAmountDigits
 import com.yourco.spend.core.money.formatMinor
@@ -169,11 +170,17 @@ class InsightViewModel @Inject constructor(
 
             val canGoForward = canGoForward(anchor, mode, todayDate)
             val periodLabel = formatPeriodLabel(mode, anchor, todayDate, locale)
+            val periodLabelRes = when {
+                mode == InsightMode.DAY && anchor.isEqual(todayDate) -> R.string.insight_today
+                mode == InsightMode.DAY && anchor.isEqual(todayDate.minusDays(1)) -> R.string.insight_yesterday
+                else -> null
+            }
 
             InsightUiState(
                 mode = mode,
                 anchorDate = anchor,
                 periodLabel = periodLabel,
+                periodLabelRes = periodLabelRes,
                 totalMinor = totalMinor,
                 formattedTotal = formatMinor(totalMinor, currencyCode, locale),
                 currencyCode = currencyCode,
@@ -224,10 +231,17 @@ class InsightViewModel @Inject constructor(
             emptyList()
         }
 
+        val initialPeriodLabelRes = when {
+            initialMode == InsightMode.DAY && initialAnchor.isEqual(todayDate) -> R.string.insight_today
+            initialMode == InsightMode.DAY && initialAnchor.isEqual(todayDate.minusDays(1)) -> R.string.insight_yesterday
+            else -> null
+        }
+
         return InsightUiState(
             mode = initialMode,
             anchorDate = initialAnchor,
             periodLabel = formatPeriodLabel(initialMode, initialAnchor, todayDate, locale),
+            periodLabelRes = initialPeriodLabelRes,
             totalMinor = 0L,
             formattedTotal = formatMinor(0L, "USD", locale),
             currencyCode = "USD",

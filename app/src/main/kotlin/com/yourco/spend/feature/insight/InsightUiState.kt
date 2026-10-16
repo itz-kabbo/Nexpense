@@ -50,6 +50,7 @@ data class InsightUiState(
     val mode: InsightMode = InsightMode.MONTH,
     val anchorDate: LocalDate,
     val periodLabel: String = "",
+    val periodLabelRes: Int? = null,
     val totalMinor: Long = 0L,
     val formattedTotal: String = "",
     val currencyCode: String = "USD",

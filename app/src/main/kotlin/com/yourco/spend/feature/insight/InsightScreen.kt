@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -65,13 +66,19 @@ fun InsightScreenContent(
     onPreviousPeriod: () -> Unit = {},
     onNextPeriod: () -> Unit = {},
 ) {
-    val modes = listOf(
-        InsightMode.DAY to stringResource(R.string.insight_day),
-        InsightMode.MONTH to stringResource(R.string.insight_month),
-        InsightMode.YEAR to stringResource(R.string.insight_year),
-    )
-    val modeTitles = modes.map { it.second }
+    val dayTitle = stringResource(R.string.insight_day)
+    val monthTitle = stringResource(R.string.insight_month)
+    val yearTitle = stringResource(R.string.insight_year)
+    val (modes, modeTitles) = remember(dayTitle, monthTitle, yearTitle) {
+        val list = listOf(
+            InsightMode.DAY to dayTitle,
+            InsightMode.MONTH to monthTitle,
+            InsightMode.YEAR to yearTitle,
+        )
+        list to list.map { it.second }
+    }
     val selectedIndex = modes.indexOfFirst { it.first == state.mode }.coerceAtLeast(0)
+    val displayPeriodLabel = state.periodLabelRes?.let { stringResource(it) } ?: state.periodLabel
 
     val scrollState = rememberScrollState()
 
@@ -132,7 +139,7 @@ fun InsightScreenContent(
             }
 
             Text(
-                text = state.periodLabel,
+                text = displayPeriodLabel,
                 style = AppTheme.typography.bodySecondary.copy(color = AppTheme.colors.textSecondary),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = AppTheme.spacing.s),
