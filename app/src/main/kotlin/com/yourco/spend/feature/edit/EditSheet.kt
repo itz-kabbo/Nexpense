@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -125,10 +126,10 @@ fun EditSheetContent(
         }
     }
 
-    var amountText by remember(expense.id) { mutableStateOf(initialAmountText) }
-    var noteText by remember(expense.id) { mutableStateOf(expense.note) }
-    var selectedCategoryId by remember(expense.id) { mutableStateOf(expense.categoryId) }
-    var selectedLocalDate by remember(expense.id) { mutableStateOf(expense.localDate) }
+    var amountText by rememberSaveable(key = "${expense.id}_amount") { mutableStateOf(initialAmountText) }
+    var noteText by rememberSaveable(key = "${expense.id}_note") { mutableStateOf(expense.note) }
+    var selectedCategoryId by rememberSaveable(key = "${expense.id}_category") { mutableStateOf(expense.categoryId) }
+    var selectedLocalDate by rememberSaveable(key = "${expense.id}_date") { mutableStateOf(expense.localDate) }
 
     var showCategoryPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -141,15 +142,16 @@ fun EditSheetContent(
         ?: categoryEntity?.defaultNameRes()?.let { stringResource(it) }
         ?: selectedCategoryId
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = AppTheme.spacing.screenHorizontal)
-            .padding(bottom = AppTheme.spacing.xl)
-            .imePadding()
-            .navigationBarsPadding(),
-    ) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = AppTheme.spacing.screenHorizontal)
+                .padding(bottom = AppTheme.spacing.xl)
+                .imePadding()
+                .navigationBarsPadding(),
+        ) {
         // Top bar with Cancel, Title, and Save
         Row(
             modifier = Modifier
@@ -293,16 +295,27 @@ fun EditSheetContent(
         }
     }
 
-    if (showCategoryPicker) {
-        CategoryPickerDialog(
-            categories = categories,
-            selectedCategoryId = selectedCategoryId,
-            onCategoryPicked = { categoryId ->
-                selectedCategoryId = categoryId
-                showCategoryPicker = false
-            },
-            onDismiss = { showCategoryPicker = false },
-        )
+        if (showCategoryPicker) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(AppTheme.colors.background.copy(alpha = 0.8f))
+                    .clickable(onClick = { showCategoryPicker = false })
+                    .padding(AppTheme.spacing.screenHorizontal),
+                contentAlignment = Alignment.Center,
+            ) {
+                CategoryPickerDialog(
+                    categories = categories,
+                    selectedCategoryId = selectedCategoryId,
+                    onCategoryPicked = { categoryId ->
+                        selectedCategoryId = categoryId
+                        showCategoryPicker = false
+                    },
+                    onDismiss = { showCategoryPicker = false },
+                    modifier = Modifier.clickable(enabled = false, onClick = {}),
+                )
+            }
+        }
     }
 
     if (showDatePicker) {

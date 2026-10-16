@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -246,16 +247,25 @@ fun TodayContent(
                     items = state.expenses,
                     key = { it.id },
                 ) { expense ->
+                    val currentExpense by rememberUpdatedState(expense)
+                    val currentOnDeleteExpense by rememberUpdatedState(onDeleteExpense)
+
                     val dismissState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { dismissValue ->
                             if (dismissValue == SwipeToDismissBoxValue.EndToStart || dismissValue == SwipeToDismissBoxValue.StartToEnd) {
-                                onDeleteExpense(expense)
+                                currentOnDeleteExpense(currentExpense)
                                 true
                             } else {
                                 false
                             }
                         }
                     )
+
+                    LaunchedEffect(expense.id) {
+                        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                        }
+                    }
 
                     SwipeToDismissBox(
                         state = dismissState,

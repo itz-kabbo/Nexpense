@@ -7,7 +7,10 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnySibling
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -16,6 +19,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import com.yourco.spend.core.designsystem.AppTheme
 import com.yourco.spend.data.db.dao.BucketTotal
 import com.yourco.spend.data.db.dao.CategoryTotal
@@ -276,20 +281,48 @@ class RecordScreenUiTest {
         // Initially "coffee" is displayed
         composeTestRule.onNodeWithText("coffee").assertIsDisplayed()
 
-        // Tap the row to open EditSheet
+        // 1. Tap the row to open EditSheet
         composeTestRule.onNodeWithText("coffee").performClick()
         composeTestRule.waitForIdle()
 
-        // EditSheet should be displayed
+        // 2. EditSheet should be displayed
         composeTestRule.onNodeWithText("Edit Expense").assertIsDisplayed()
 
-        // Modify note and amount via recordVm to verify save updates UI
-        val updated = expense.copy(
-            amountMinor = 750,
-            note = "latte",
-            categoryId = "fun",
-        )
-        recordVm.updateExpense(updated)
+        // 3. Change Category to Fun
+        // In Robolectric, ModalBottomSheet/Dialog window touch events do not receive pointer injection
+        // from activity.dispatchTouchEvent(), so OnClick semantic action is triggered directly.
+        val targetNode = composeTestRule.onNode(hasText("Food & Drink") and hasAnySibling(hasText("Category")))
+        val semNode = targetNode.fetchSemanticsNode()
+        composeTestRule.runOnUiThread {
+            semNode.config[androidx.compose.ui.semantics.SemanticsActions.OnClick].action?.invoke()
+        }
+        composeTestRule.waitForIdle()
+
+        val funNode = composeTestRule.onNodeWithText("Fun")
+        val funSemNode = funNode.fetchSemanticsNode()
+        composeTestRule.runOnUiThread {
+            funSemNode.config[androidx.compose.ui.semantics.SemanticsActions.OnClick].action?.invoke()
+        }
+        composeTestRule.waitForIdle()
+
+        // 4. Edit Note field to "latte"
+        val noteField = composeTestRule.onNode(hasText("Note") and hasSetTextAction())
+        noteField.performTextClearance()
+        noteField.performTextInput("latte")
+        composeTestRule.waitForIdle()
+
+        // 5. Edit Amount field to "7.50"
+        val amountField = composeTestRule.onNode(hasText("Amount") and hasSetTextAction())
+        amountField.performTextClearance()
+        amountField.performTextInput("7.50")
+        composeTestRule.waitForIdle()
+
+        // 6. Click Save in EditSheet
+        val saveNode = composeTestRule.onNodeWithText("Save")
+        val saveSemNode = saveNode.fetchSemanticsNode()
+        composeTestRule.runOnUiThread {
+            saveSemNode.config[androidx.compose.ui.semantics.SemanticsActions.OnClick].action?.invoke()
+        }
         composeTestRule.waitForIdle()
 
         // In repository, expense should be updated
@@ -298,6 +331,7 @@ class RecordScreenUiTest {
         assertEquals(750L, retrieved?.amountMinor)
         assertEquals("latte", retrieved?.note)
         assertEquals("fun", retrieved?.categoryId)
+        assertEquals("fun", runBlocking { fakeLearnedMappingRepo.getMapping("latte") })
 
         // In UI, row should now show "latte" and "Fun"
         composeTestRule.onNodeWithText("latte").assertIsDisplayed()
@@ -333,19 +367,26 @@ class RecordScreenUiTest {
 
         composeTestRule.onNodeWithText("lunch").assertIsDisplayed()
 
-        // Delete expense
-        recordVm.deleteExpense(expense)
+        // 1. Perform swipe to delete gesture on the row
+        composeTestRule.onNodeWithText("lunch").performTouchInput { swipeLeft() }
         composeTestRule.waitForIdle()
 
-        // Should be empty now
+        // 2. Assert "Deleted" and "Undo" appear on Snackbar, and empty state is shown
+        composeTestRule.onNodeWithText("Deleted").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Undo").assertIsDisplayed()
         composeTestRule.onNodeWithText("Nothing yet. Swipe up.").assertIsDisplayed()
 
-        // Undo delete
-        recordVm.undoDelete("e1")
+        // 3. Click "Undo" on the Snackbar
+        composeTestRule.onNodeWithText("Undo").performClick()
         composeTestRule.waitForIdle()
 
-        // Should be restored
+        // 4. Assert item is restored in the UI list
         composeTestRule.onNodeWithText("lunch").assertIsDisplayed()
+
+        // In repository, expense should be restored
+        val restored = runBlocking { fakeExpenseRepo.getById("e1") }
+        assertNotNull(restored)
+        assertNull(restored?.deletedAt)
     }
 
     @Test

@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,16 +29,36 @@ fun CategoryPickerDialog(
     selectedCategoryId: String?,
     onCategoryPicked: (String) -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.picker_select_category),
-                style = AppTheme.typography.title.copy(color = AppTheme.colors.textPrimary),
-            )
-        },
-        text = {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = AppTheme.colors.surface,
+        shape = AppTheme.shapes.card,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppTheme.spacing.m),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = AppTheme.spacing.s),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.picker_select_category),
+                    style = AppTheme.typography.title.copy(color = AppTheme.colors.textPrimary),
+                )
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        text = stringResource(R.string.cd_close),
+                        style = AppTheme.typography.label.copy(color = AppTheme.colors.textSecondary),
+                    )
+                }
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -79,17 +99,6 @@ fun CategoryPickerDialog(
                     }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(R.string.cd_close),
-                    style = AppTheme.typography.label.copy(color = AppTheme.colors.textSecondary),
-                )
-            }
-        },
-        containerColor = AppTheme.colors.surface,
-        shape = AppTheme.shapes.card,
-    )
+        }
+    }
 }
