@@ -114,6 +114,10 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
+tasks.matching { it.name == "testDebugUnitTest" }.configureEach {
+    dependsOn(":parser:test")
+}
+
 tasks.register("checkNoInternetPermission") {
     description = "Fails if release manifest contains android.permission.INTERNET"
     dependsOn("processReleaseMainManifest")
