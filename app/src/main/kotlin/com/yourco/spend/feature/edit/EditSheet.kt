@@ -1,5 +1,6 @@
 package com.yourco.spend.feature.edit
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -96,12 +98,18 @@ fun EditSheet(
         containerColor = AppTheme.colors.surface,
         modifier = modifier,
     ) {
-        EditSheetContent(
-            expense = expense,
-            categories = categories,
-            onSave = onSave,
-            onCancel = onDismiss,
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            EditSheetContent(
+                modifier = Modifier.widthIn(max = 480.dp),
+                expense = expense,
+                categories = categories,
+                onSave = onSave,
+                onCancel = onDismiss,
+            )
+        }
     }
 }
 
@@ -133,6 +141,15 @@ fun EditSheetContent(
 
     var showCategoryPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // VERIFY: Predictive back / BackHandler on EditSheet
+    BackHandler {
+        when {
+            showDatePicker -> showDatePicker = false
+            showCategoryPicker -> showCategoryPicker = false
+            else -> onCancel()
+        }
+    }
 
     val parsedMinor = parseAmountToMinor(amountText, expense.currency)
     val isSaveEnabled = parsedMinor != null

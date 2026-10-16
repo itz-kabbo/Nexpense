@@ -6,11 +6,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -34,13 +41,16 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.yourco.spend.R
 import com.yourco.spend.core.designsystem.AppTheme
+import com.yourco.spend.core.designsystem.components.SegmentedControl
 import com.yourco.spend.feature.insight.InsightScreen
 import com.yourco.spend.feature.receipt.ReceiptScreen
 import com.yourco.spend.feature.record.RecordScreen
 import com.yourco.spend.feature.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
-// VERIFY: Horizontal pager with 3 pages (Record, Receipt, Insight) and 3-dot indicator from GUIDE.md section 3.1
+enum class RightPaneTab { RECEIPT, INSIGHT }
+
+// VERIFY: Horizontal pager with 3 pages on compact screens; two-pane layout on medium and expanded widths (>= 600dp) per GUIDE.md section 3.4
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppRoot(
@@ -53,39 +63,127 @@ fun AppRoot(
         BackHandler { showSettings = false }
         SettingsScreen(onNavigateBack = { showSettings = false })
     } else {
-        val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
-        val coroutineScope = rememberCoroutineScope()
-
-        Box(modifier = modifier.fillMaxSize()) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-            ) { page ->
-                when (page) {
-                    0 -> RecordScreen(onNavigateToSettings = {
+        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+            if (maxWidth >= 600.dp) {
+                TwoPaneRoot(
+                    onNavigateToSettings = {
                         if (onNavigateToSettings != null) {
                             onNavigateToSettings()
                         } else {
                             showSettings = true
                         }
-                    })
-                    1 -> ReceiptScreen()
-                    2 -> InsightScreen()
+                    },
+                )
+            } else {
+                val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
+                val coroutineScope = rememberCoroutineScope()
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                    ) { page ->
+                        when (page) {
+                            0 -> RecordScreen(onNavigateToSettings = {
+                                if (onNavigateToSettings != null) {
+                                    onNavigateToSettings()
+                                } else {
+                                    showSettings = true
+                                }
+                            })
+                            1 -> ReceiptScreen()
+                            2 -> InsightScreen()
+                        }
+                    }
+
+                    ThreeDotIndicator(
+                        pagerState = pagerState,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .navigationBarsPadding()
+                            .padding(bottom = 8.dp),
+                        onDotClick = { targetPage ->
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(targetPage)
+                            }
+                        },
+                    )
                 }
             }
+        }
+    }
+}
 
-            ThreeDotIndicator(
-                pagerState = pagerState,
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun TwoPaneRoot(
+    onNavigateToSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+    recordPane: @Composable () -> Unit = { RecordScreen(onNavigateToSettings = onNavigateToSettings) },
+    receiptPane: @Composable () -> Unit = { ReceiptScreen() },
+    insightPane: @Composable () -> Unit = { InsightScreen() },
+) {
+    var rightPaneTab by rememberSaveable { mutableStateOf(RightPaneTab.RECEIPT) }
+
+    Row(
+        modifier = modifier
+            .fillMaxSize()
+            .background(AppTheme.colors.background),
+    ) {
+        // Left pane: Record screen
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+        ) {
+            recordPane()
+        }
+
+        // Hairline vertical divider
+        Box(
+            modifier = Modifier
+                .width(0.5.dp)
+                .fillMaxHeight()
+                .background(AppTheme.colors.hairline),
+        )
+
+        // Right pane: Receipt / Insight with segmented tab switcher
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+        ) {
+            Row(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(bottom = 8.dp),
-                onDotClick = { targetPage ->
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(targetPage)
-                    }
-                },
-            )
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = AppTheme.spacing.screenHorizontal, vertical = AppTheme.spacing.s),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SegmentedControl(
+                    items = listOf(
+                        stringResource(R.string.nav_receipt),
+                        stringResource(R.string.nav_insight),
+                    ),
+                    selectedIndex = if (rightPaneTab == RightPaneTab.RECEIPT) 0 else 1,
+                    onSelectedIndexChange = { index ->
+                        rightPaneTab = if (index == 0) RightPaneTab.RECEIPT else RightPaneTab.INSIGHT
+                    },
+                    modifier = Modifier.widthIn(max = 280.dp),
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                when (rightPaneTab) {
+                    RightPaneTab.RECEIPT -> receiptPane()
+                    RightPaneTab.INSIGHT -> insightPane()
+                }
+            }
         }
     }
 }

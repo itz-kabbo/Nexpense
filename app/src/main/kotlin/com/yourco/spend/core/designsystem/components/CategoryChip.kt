@@ -43,7 +43,7 @@ fun CategoryChip(
 
     Box(
         modifier = modifier
-            .defaultMinSize(minHeight = 36.dp, minWidth = 48.dp)
+            .defaultMinSize(minHeight = 48.dp, minWidth = 48.dp)
             .clip(AppTheme.shapes.chip)
             .background(backgroundColor)
             .border(width = 0.5.dp, color = borderColor, shape = AppTheme.shapes.chip)

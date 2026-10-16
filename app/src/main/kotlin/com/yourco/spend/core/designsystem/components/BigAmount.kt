@@ -22,14 +22,12 @@ fun BigAmount(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
 ) {
-    val rowModifier = if (contentDescription != null) {
-        modifier.semantics { this.contentDescription = contentDescription }
-    } else {
-        modifier
-    }
+    val a11yDescription = contentDescription ?: "$currencySymbol$amount"
 
     Row(
-        modifier = rowModifier,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            this.contentDescription = a11yDescription
+        },
         verticalAlignment = Alignment.Bottom,
     ) {
         Text(

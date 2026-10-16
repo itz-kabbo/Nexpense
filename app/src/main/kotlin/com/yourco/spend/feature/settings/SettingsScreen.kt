@@ -1,6 +1,7 @@
 package com.yourco.spend.feature.settings
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -83,6 +84,8 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    BackHandler { onNavigateBack() }
+
     val exportSuccessMsg = stringResource(R.string.settings_export_success)
     val exportFailedMsg = stringResource(R.string.settings_export_failed)
     val importFailedMsg = stringResource(R.string.settings_import_failed)
@@ -94,12 +97,22 @@ fun SettingsScreen(
         if (uri != null) {
             scope.launch {
                 try {
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(uri)?.use { stream ->
-                            viewModel.exportJson(stream)
+                    val success = withContext(Dispatchers.IO) {
+                        val stream = context.contentResolver.openOutputStream(uri)
+                        if (stream != null) {
+                            stream.use { output ->
+                                viewModel.exportJson(output)
+                            }
+                            true
+                        } else {
+                            false
                         }
                     }
-                    snackbarHostState.showSnackbar(exportSuccessMsg)
+                    if (success) {
+                        snackbarHostState.showSnackbar(exportSuccessMsg)
+                    } else {
+                        snackbarHostState.showSnackbar(exportFailedMsg)
+                    }
                 } catch (e: Exception) {
                     snackbarHostState.showSnackbar(e.message ?: exportFailedMsg)
                 }
@@ -113,12 +126,22 @@ fun SettingsScreen(
         if (uri != null) {
             scope.launch {
                 try {
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(uri)?.use { stream ->
-                            viewModel.exportCsv(stream)
+                    val success = withContext(Dispatchers.IO) {
+                        val stream = context.contentResolver.openOutputStream(uri)
+                        if (stream != null) {
+                            stream.use { output ->
+                                viewModel.exportCsv(output)
+                            }
+                            true
+                        } else {
+                            false
                         }
                     }
-                    snackbarHostState.showSnackbar(exportSuccessMsg)
+                    if (success) {
+                        snackbarHostState.showSnackbar(exportSuccessMsg)
+                    } else {
+                        snackbarHostState.showSnackbar(exportFailedMsg)
+                    }
                 } catch (e: Exception) {
                     snackbarHostState.showSnackbar(e.message ?: exportFailedMsg)
                 }

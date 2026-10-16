@@ -18,4 +18,10 @@
 - **Issue:** On Windows developer hosts, `androidx.core:core:1.15.0`'s internal `FileProvider.belongsToRoot` hardcodes `'/'` separator checks (`rootPath + '/'`), which fails against Windows local paths using `\` during JVM unit tests in Robolectric. Physical Android devices (Linux) use `/` and succeed.
 - **Decision:** In `ReceiptImageSaver.saveBitmap`, catch `IllegalArgumentException` from `FileProvider.getUriForFile` on Windows JVM test hosts and construct the equivalent `content://$authority/receipts/${file.name}` URI, preserving exact FileProvider behavior on devices while allowing offline unit tests to succeed on Windows.
 
+## M9: Splash Exit Interpolator and Two-Pane Tab Switching
+
+- **Context:** `GUIDE.md` section 3.2 specifies 600-800ms fade and scale exit animation of the splash screen; section 3.4 specifies large screen layout with Record and Receipt side-by-side.
+- **Decision:** Used `AccelerateDecelerateInterpolator` from Android standard animation framework for the splash exit animation, providing smooth native deceleration without external dependency bloat. For large screens (>= 600dp), structured `TwoPaneRoot` with Record pinned on the left pane and a segmented tab switcher between Receipt and Insight on the right pane, keeping the entry sheet centered and constrained to 480dp max width.
+
+
 

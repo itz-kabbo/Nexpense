@@ -36,6 +36,7 @@ class EntryViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
     private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    private val todayObserver: com.yourco.spend.core.time.TodayObserver = com.yourco.spend.core.time.TodayObserver.from(clock),
 ) : ViewModel() {
 
     companion object {
@@ -115,7 +116,7 @@ class EntryViewModel @Inject constructor(
         val override = _selectedCategoryOverride.value
         val currency = _currencyCode.value
         val now = clock.millis()
-        val localDate = clock.todayLocalDate()
+        val localDate = todayObserver.currentLocalDate().toString()
 
         val entity = ExpenseEntity(
             id = UUID.randomUUID().toString(),

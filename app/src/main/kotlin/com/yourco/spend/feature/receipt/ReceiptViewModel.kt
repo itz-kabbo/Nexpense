@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yourco.spend.R
 import com.yourco.spend.core.money.formatMinor
+import com.yourco.spend.core.time.TodayObserver
 import com.yourco.spend.data.db.entity.CategoryEntity
 import com.yourco.spend.data.repo.ExpenseRepository
 import com.yourco.spend.data.repo.SettingsRepository
@@ -30,6 +31,7 @@ class ReceiptViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
     private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    private val todayObserver: TodayObserver = TodayObserver.from(clock),
 ) : ViewModel() {
 
     companion object {
@@ -37,7 +39,7 @@ class ReceiptViewModel @Inject constructor(
     }
 
     private val today: LocalDate
-        get() = LocalDate.now(clock)
+        get() = todayObserver.currentLocalDate()
 
     private val initialDate: LocalDate = savedStateHandle.get<String>(KEY_SELECTED_DATE)?.let {
         try {
@@ -56,56 +58,56 @@ class ReceiptViewModel @Inject constructor(
         return date.format(formatter)
     }
 
-    val state: StateFlow<ReceiptUiState> = combine(_currentDate, settingsRepository.currencyCode, ::Pair)
-        .flatMapLatest { (date, currencyCode) ->
-            val dateIso = date.toString()
-            combine(
-                expenseRepository.observeDay(dateIso),
-                expenseRepository.observeTotal(dateIso, dateIso, currency = currencyCode),
-            ) { expenses, totalFromDb ->
-                val locale = Locale.getDefault()
-                // VERIFY: Receipt items ordering chronological (oldest first like printed shopping slip)
-                val items = expenses.reversed().map { expense ->
-                    val categoryDefaultRes = CategoryEntity.defaultNameRes(expense.categoryId)
-                    val noteRes = if (expense.note.isBlank()) {
-                        categoryDefaultRes ?: R.string.category_other
-                    } else {
-                        null
-                    }
-                    ReceiptItemUiModel(
-                        id = expense.id,
-                        note = expense.note,
-                        noteRes = noteRes,
-                        categoryId = expense.categoryId,
-                        amountMinor = expense.amountMinor,
-                        formattedAmount = formatMinor(expense.amountMinor, expense.currency, locale),
-                    )
+    val state: StateFlow<ReceiptUiState> = combine(_currentDate, settingsRepository.currencyCode, todayObserver.todayFlow) { date, currencyCode, todayDate ->
+        Triple(date, currencyCode, todayDate)
+    }.flatMapLatest { (date, currencyCode, todayDate) ->
+        val dateIso = date.toString()
+        combine(
+            expenseRepository.observeDay(dateIso),
+            expenseRepository.observeTotal(dateIso, dateIso, currency = currencyCode),
+        ) { expenses, totalFromDb ->
+            val locale = Locale.getDefault()
+            // VERIFY: Receipt items ordering chronological (oldest first like printed shopping slip)
+            val items = expenses.reversed().map { expense ->
+                val categoryDefaultRes = CategoryEntity.defaultNameRes(expense.categoryId)
+                val noteRes = if (expense.note.isBlank()) {
+                    categoryDefaultRes ?: R.string.category_other
+                } else {
+                    null
                 }
-                val currentDateIsBeforeToday = date.isBefore(today)
-                ReceiptUiState(
-                    selectedDate = dateIso,
-                    date = date,
-                    formattedDate = formatDate(date, locale),
-                    items = items,
-                    totalMinor = totalFromDb,
-                    formattedTotal = formatMinor(totalFromDb, currencyCode, locale),
-                    currencyCode = currencyCode,
-                    isEmpty = items.isEmpty(),
-                    canGoForward = currentDateIsBeforeToday,
+                ReceiptItemUiModel(
+                    id = expense.id,
+                    note = expense.note,
+                    noteRes = noteRes,
+                    categoryId = expense.categoryId,
+                    amountMinor = expense.amountMinor,
+                    formattedAmount = formatMinor(expense.amountMinor, expense.currency, locale),
                 )
             }
+            val currentDateIsBeforeToday = date.isBefore(todayDate)
+            ReceiptUiState(
+                selectedDate = dateIso,
+                date = date,
+                formattedDate = formatDate(date, locale),
+                items = items,
+                totalMinor = totalFromDb,
+                formattedTotal = formatMinor(totalFromDb, currencyCode, locale),
+                currencyCode = currencyCode,
+                isEmpty = items.isEmpty(),
+                canGoForward = currentDateIsBeforeToday,
+            )
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ReceiptUiState(
-                selectedDate = initialDate.toString(),
-                date = initialDate,
-                formattedDate = formatDate(initialDate),
-                isEmpty = true,
-                canGoForward = initialDate.isBefore(today),
-            ),
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ReceiptUiState(
+            selectedDate = initialDate.toString(),
+            date = initialDate,
+            formattedDate = formatDate(initialDate),
+            isEmpty = true,
+            canGoForward = initialDate.isBefore(today),
+        ),
+    )
 
     fun previousDay() {
         _currentDate.update { it.minusDays(1) }

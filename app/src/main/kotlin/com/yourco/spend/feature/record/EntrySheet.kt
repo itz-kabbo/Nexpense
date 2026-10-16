@@ -1,5 +1,7 @@
 package com.yourco.spend.feature.record
 
+import android.os.Build
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -35,6 +38,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -64,17 +68,23 @@ fun EntrySheet(
     var showCategoryPicker by remember { mutableStateOf(false) }
 
     val haptic = LocalHapticFeedback.current
+    val view = LocalView.current
 
     LaunchedEffect(viewModel) {
         viewModel.confirmHapticEvents.collect {
-            // GUIDE 3.3: HapticFeedbackType.Confirm on save (fallback to TextHandleMove when Confirm is unavailable)
-            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            // GUIDE 3.3: HapticFeedbackType.Confirm on save (API 30+, fallback to TextHandleMove)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+            } else {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            }
         }
     }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .widthIn(max = 480.dp)
             .imePadding()
             .padding(horizontal = AppTheme.spacing.screenHorizontal)
             .padding(bottom = AppTheme.spacing.xl, top = AppTheme.spacing.s),

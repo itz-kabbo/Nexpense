@@ -91,5 +91,8 @@
     <string name="settings_privacy_note">100% offline. No internet permission.</string>
     <string name="cd_back">Back</string>
     <string name="cd_toggle_hidden">Toggle category visibility</string>
+    <string name="nav_record">Record</string>
+    <string name="nav_receipt">Receipt</string>
+    <string name="nav_insight">Insight</string>
 </resources>
 

@@ -47,4 +47,35 @@ class AppRootTest {
         composeTestRule.onNodeWithContentDescription("Page 3").performClick()
         assertEquals(2, clickedPage)
     }
+
+    @Test
+    fun twoPaneRoot_rendersPanesAndSwitchesTabs() {
+        composeTestRule.setContent {
+            AppTheme {
+                TwoPaneRoot(
+                    onNavigateToSettings = {},
+                    recordPane = { androidx.compose.material3.Text("Record Pane Content") },
+                    receiptPane = { androidx.compose.material3.Text("Receipt Pane Content") },
+                    insightPane = { androidx.compose.material3.Text("Insight Pane Content") },
+                )
+            }
+        }
+
+        // Record pane is always visible on the left
+        composeTestRule.onNode(androidx.compose.ui.test.hasText("Record Pane Content")).assertIsDisplayed()
+
+        // Tab switcher shows Receipt and Insight
+        composeTestRule.onNode(androidx.compose.ui.test.hasText("Receipt")).assertIsDisplayed()
+        composeTestRule.onNode(androidx.compose.ui.test.hasText("Insight")).assertIsDisplayed()
+
+        // Initially Receipt tab is selected
+        composeTestRule.onNode(androidx.compose.ui.test.hasText("Receipt Pane Content")).assertIsDisplayed()
+
+        // Switch to Insight tab
+        composeTestRule.onNode(androidx.compose.ui.test.hasText("Insight")).performClick()
+        composeTestRule.waitForIdle()
+
+        // Insight pane is now visible
+        composeTestRule.onNode(androidx.compose.ui.test.hasText("Insight Pane Content")).assertIsDisplayed()
+    }
 }

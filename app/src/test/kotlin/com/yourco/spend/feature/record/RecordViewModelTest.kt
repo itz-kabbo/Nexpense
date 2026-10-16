@@ -220,6 +220,34 @@ class RecordViewModelTest {
 
         assertTrue(fakeExpenseRepo.restoredIds.contains("e1"))
     }
+
+    @Test
+    fun midnightRollover_dateFlips_andStateUpdates() = runTest(testDispatcher) {
+        val todayState = MutableStateFlow(java.time.LocalDate.parse("2026-10-15"))
+        val dynamicTodayObserver = object : com.yourco.spend.core.time.TodayObserver {
+            override val todayFlow = todayState
+            override fun currentLocalDate(): java.time.LocalDate = todayState.value
+        }
+        val dynamicVm = RecordViewModel(
+            expenseRepository = fakeExpenseRepo,
+            settingsRepository = fakeSettingsRepo,
+            categoryRepository = fakeCategoryRepo,
+            learnedMappingRepository = fakeLearnedMappingRepo,
+            clock = fixedClock,
+            todayObserver = dynamicTodayObserver,
+        )
+        val collectJob = backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) {
+            dynamicVm.state.collect {}
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(dynamicVm.state.value.todayDateLabel.contains("Oct 15") || dynamicVm.state.value.todayDateLabel.contains("15"))
+
+        // Midnight rollover occurs: flip date to Oct 16
+        todayState.value = java.time.LocalDate.parse("2026-10-16")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(dynamicVm.state.value.todayDateLabel.contains("Oct 16") || dynamicVm.state.value.todayDateLabel.contains("16"))
+    }
 }
 
 private class FakeExpenseRepository : ExpenseRepository {

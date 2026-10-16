@@ -61,7 +61,7 @@ fun SegmentedControl(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .defaultMinSize(minHeight = 36.dp)
+                    .defaultMinSize(minHeight = 48.dp)
                     .clip(AppTheme.shapes.pill)
                     .background(backgroundColor)
                     .selectable(

@@ -1,8 +1,10 @@
 package com.yourco.spend.core.time
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.time.Clock
 import java.time.Instant
@@ -20,6 +22,13 @@ object ClockModule {
     @Provides
     @Singleton
     fun provideZoneId(clock: Clock): ZoneId = clock.zone
+
+    @Provides
+    @Singleton
+    fun provideTodayObserver(
+        @ApplicationContext context: Context,
+        clock: Clock,
+    ): TodayObserver = DefaultTodayObserver(context, clock)
 }
 
 /**

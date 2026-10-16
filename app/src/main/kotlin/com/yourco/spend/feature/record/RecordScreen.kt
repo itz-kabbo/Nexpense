@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -111,14 +112,28 @@ fun RecordScreen(
         sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         sheetContainerColor = AppTheme.colors.surface,
         sheetDragHandle = {
-            EntryHandle(onClick = { scope.launch { sheetState.expand() } })
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                EntryHandle(
+                    modifier = Modifier.widthIn(max = 480.dp),
+                    onClick = { scope.launch { sheetState.expand() } },
+                )
+            }
         },
         sheetContent = {
-            EntrySheet(
-                viewModel = entryVm,
-                focusRequester = focusRequester,
-                onSaved = { scope.launch { sheetState.partialExpand() } },
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                EntrySheet(
+                    modifier = Modifier.widthIn(max = 480.dp),
+                    viewModel = entryVm,
+                    focusRequester = focusRequester,
+                    onSaved = { scope.launch { sheetState.partialExpand() } },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = AppTheme.colors.background,

@@ -31,3 +31,6 @@ When implementing defaults, flag with `// VERIFY:` comments in code.
 | Insight | Stepper Layout | Centered below BigAmount with `<` Previous, label, `>` Next | Proposed | Verify stepper position, arrows, and font size on iOS |
 | Insight | Year 12-Bar Chart | Canvas-based 12 monthly bars with current month highlighted in primary text | Proposed | Verify 12-bar chart aesthetics and month highlight against iOS |
 | Insight | Month Sparkline | Canvas-based daily mini-bars across 28..31 days with current day highlight | Proposed | Verify daily sparkline / distribution aesthetic on iOS |
+| Large Screens | Two-Pane Layout | Record and Receipt side-by-side with segmented tab to Insight on >= 600dp | Proposed | Tablet / foldable / landscape window size class layout |
+| Large Screens | Sheet Width | EntrySheet and EditSheet centered dialog-width sheet capped at 480dp | Proposed | Verify large screen sheet presentation against iPad |
+| Midnight Rollover | Ticking Flow & Broadcast | Automatic today date flip without restart via TodayObserver | Proposed | Verify date transition behavior on device midnight |

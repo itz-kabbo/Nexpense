@@ -7,6 +7,7 @@ import com.yourco.spend.R
 import com.yourco.spend.core.money.currencySymbol
 import com.yourco.spend.core.money.formatAmountDigits
 import com.yourco.spend.core.money.formatMinor
+import com.yourco.spend.core.time.TodayObserver
 import com.yourco.spend.data.db.entity.CategoryEntity
 import com.yourco.spend.data.repo.CategoryRepository
 import com.yourco.spend.data.repo.ExpenseRepository
@@ -35,6 +36,7 @@ class InsightViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
     private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    private val todayObserver: TodayObserver = TodayObserver.from(clock),
 ) : ViewModel() {
 
     companion object {
@@ -43,7 +45,7 @@ class InsightViewModel @Inject constructor(
     }
 
     private val today: LocalDate
-        get() = LocalDate.now(clock)
+        get() = todayObserver.currentLocalDate()
 
     private val initialMode: InsightMode = savedStateHandle.get<String>(KEY_MODE)?.let {
         runCatching { InsightMode.valueOf(it) }.getOrNull()
@@ -56,11 +58,16 @@ class InsightViewModel @Inject constructor(
     private val _mode = MutableStateFlow(initialMode)
     private val _anchorDate = MutableStateFlow(initialAnchor)
 
-    private data class QueryKey(val mode: InsightMode, val anchor: LocalDate, val currencyCode: String)
+    private data class QueryKey(val mode: InsightMode, val anchor: LocalDate, val currencyCode: String, val todayDate: LocalDate)
 
-    val state: StateFlow<InsightUiState> = combine(_mode, _anchorDate, settingsRepository.currencyCode) { mode, anchor, currencyCode ->
-        QueryKey(mode, anchor, currencyCode)
-    }.flatMapLatest { (mode, anchor, currencyCode) ->
+    val state: StateFlow<InsightUiState> = combine(
+        _mode,
+        _anchorDate,
+        settingsRepository.currencyCode,
+        todayObserver.todayFlow,
+    ) { mode, anchor, currencyCode, todayDate ->
+        QueryKey(mode, anchor, currencyCode, todayDate)
+    }.flatMapLatest { (mode, anchor, currencyCode, todayDate) ->
         val bounds = periodBounds(mode, anchor)
         val from = bounds.startIso
         val to = bounds.endIso
@@ -77,7 +84,6 @@ class InsightViewModel @Inject constructor(
             categoryRepository.observeAll(),
         ) { totalMinor, categoryTotals, buckets, categoriesList ->
             val locale = Locale.getDefault()
-            val todayDate = today
             val categoryEntityMap = categoriesList.associateBy { it.id }
 
             val categoryUiModels = categoryTotals.map { catTotal ->

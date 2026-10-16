@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.yourco.spend.core.money.currencySymbol
 import com.yourco.spend.core.money.formatAmountDigits
 import com.yourco.spend.core.money.formatMinor
-import com.yourco.spend.core.time.todayLocalDate
+import com.yourco.spend.core.time.TodayObserver
 import com.yourco.spend.data.db.entity.CategoryEntity
 import com.yourco.spend.data.db.entity.ExpenseEntity
 import com.yourco.spend.data.repo.CategoryRepository
@@ -36,39 +36,41 @@ class RecordViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val learnedMappingRepository: LearnedMappingRepository,
     private val clock: Clock,
+    private val todayObserver: TodayObserver = TodayObserver.from(clock),
 ) : ViewModel() {
 
     // VERIFY: Today date format pattern (defaults to "EEEE, MMM d" in user's locale)
-    private fun formatTodayDate(locale: Locale = Locale.getDefault()): String {
-        val today = LocalDate.now(clock)
+    private fun formatTodayDate(date: LocalDate, locale: Locale = Locale.getDefault()): String {
         val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", locale)
-        return today.format(formatter)
+        return date.format(formatter)
     }
 
-    private val todayIso: String = clock.todayLocalDate()
-
-    val state: StateFlow<RecordUiState> = settingsRepository.currencyCode
-        .flatMapLatest { currencyCode ->
-            combine(
-                expenseRepository.observeDay(todayIso),
-                expenseRepository.observeTotal(todayIso, todayIso, currency = currencyCode),
-            ) { expenses, totalMinor ->
-                val locale = Locale.getDefault()
-                RecordUiState(
-                    todayDateLabel = formatTodayDate(locale),
-                    totalMinor = totalMinor,
-                    formattedTotal = formatMinor(totalMinor, currencyCode, locale),
-                    currencySymbol = currencySymbol(currencyCode, locale),
-                    amountString = formatAmountDigits(totalMinor, currencyCode, locale),
-                    expenses = expenses,
-                    currencyCode = currencyCode,
-                )
-            }
-        }.stateIn(
+    val state: StateFlow<RecordUiState> = combine(
+        todayObserver.todayFlow,
+        settingsRepository.currencyCode,
+        ::Pair,
+    ).flatMapLatest { (today, currencyCode) ->
+        val todayIso = today.toString()
+        combine(
+            expenseRepository.observeDay(todayIso),
+            expenseRepository.observeTotal(todayIso, todayIso, currency = currencyCode),
+        ) { expenses, totalMinor ->
+            val locale = Locale.getDefault()
+            RecordUiState(
+                todayDateLabel = formatTodayDate(today, locale),
+                totalMinor = totalMinor,
+                formattedTotal = formatMinor(totalMinor, currencyCode, locale),
+                currencySymbol = currencySymbol(currencyCode, locale),
+                amountString = formatAmountDigits(totalMinor, currencyCode, locale),
+                expenses = expenses,
+                currencyCode = currencyCode,
+            )
+        }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = RecordUiState(
-            todayDateLabel = formatTodayDate(),
+            todayDateLabel = formatTodayDate(todayObserver.currentLocalDate()),
             currencyCode = "USD",
         ),
     )
