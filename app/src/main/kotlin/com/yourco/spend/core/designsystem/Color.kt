@@ -3,7 +3,7 @@ package com.yourco.spend.core.designsystem
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// VERIFY: Proposed design tokens from section 3.3 and UI.md redesign specification
+// VERIFY: Proposed design tokens from section 3.3 and docs/UI.md redesign specification
 // Light Palette (Tactile Porcelain)
 val BackgroundLight = Color(0xFFFBFBF9)
 val SurfaceLight = Color(0xFFFFFFFF)

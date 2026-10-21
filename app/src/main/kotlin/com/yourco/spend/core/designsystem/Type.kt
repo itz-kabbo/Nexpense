@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// VERIFY: Typography token sizes and weights proposed in sections 3.2, 3.3, and UI.md redesign specification
+// VERIFY: Typography token sizes and weights proposed in sections 3.2, 3.3, and docs/UI.md redesign specification
 @Immutable
 data class AppTypography(
     // UI - Optical Hero Amount tokens

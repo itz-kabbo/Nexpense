@@ -98,6 +98,7 @@ This project was made for my own use in my spare time and was **fully vibe-coded
 - [Privacy policy](docs/PRIVACY.md)
 - [Data safety notes](docs/DATA_SAFETY.md)
 - [Store listing draft](docs/STORE_LISTING.md)
+- [UI/UX design specification](docs/UI.md)
 - [Audit report](docs/AUDIT_REPORT.md)
 
 ## Contributing

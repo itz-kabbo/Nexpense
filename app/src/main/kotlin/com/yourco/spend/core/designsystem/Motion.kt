@@ -7,7 +7,7 @@ import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 
-// VERIFY: Motion parameters proposed in section 3.3 and UI.md redesign specification
+// VERIFY: Motion parameters proposed in section 3.3 and docs/UI.md redesign specification
 object AppMotion {
     const val SPRING_DAMPING: Float = 0.85f
     const val SPRING_STIFFNESS: Float = Spring.StiffnessMedium

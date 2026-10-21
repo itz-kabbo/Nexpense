@@ -1,8 +1,8 @@
 # UI/UX Redesign Specification: Tactile Paper & Editorial Minimal
 
-**Date:** 2026-10-20  
-**Status:** Approved by User  
-**Target Architecture:** Android Jetpack Compose, Material 3, Monochromatic Design System  
+- **Date:** 2026-10-20
+- **Status:** Approved by User
+- **Target Architecture:** Android Jetpack Compose, Material 3, Monochromatic Design System
 **Source of Truth:** [GUIDE.md](GUIDE.md)
 
 > This file is a visual design proposal. Use `GUIDE.md` for current feature behavior and `../PARITY.md` for source-reviewed implementation status; this document is not evidence of runtime or pixel parity.
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary & Design Vision
 
-This specification details the comprehensive UI/UX redesign of Mote. for Android. Guided by the current screenshots showing zero-data states, the existing UI displays clean simplicity but suffers from several critical visual gaps:
+This specification describes a proposed UI/UX redesign for Nexpense, an independent Android expense tracker inspired by Mote. — Minimal Expense Tracker by [Yun Ju Tseng](https://apps.apple.com/au/app/mote/id6816360396). Nexpense has its own name and visual identity; this document does not authorize use of Mote branding or assets. The proposal is guided by Nexpense empty-state screenshots and calls out the main visual gaps:
 1. **Unanchored Empty Voids:** Zero-expense states feature plain, unstyled gray text strings floating in large empty expanses.
 2. **Disappearing Signature Identity:** On the Daily Receipt screen, having no expenses causes the entire physical paper receipt slip to disappear completely, replacing it with plain text.
 3. **Flat Contrast & Harsh Glare:** Light mode relies on stark `#FFFFFF` pure white, while dark mode lacks depth, layer separation, and specular lighting.
@@ -85,9 +85,9 @@ EMPTY STATE                                  POPULATED STATE
 |                                    |       |   Coffee             [Food]  $6.00 |
 |          No expenses yet           |       |   -------------------------------- |
 |     Swipe up to record your        |       |   Lunch              [Food] $18.50 |
-|           first mote               |       |   -------------------------------- |
+|           first expense               |       |   -------------------------------- |
 |                                    |       |   Uber          [Transport] $18.00 |
-|    Small alone. Meaningful together.|      |                                    |
+|    Simple records. Clearer days.|      |                                    |
 |                                    |       |                                    |
 |      [ ✏️ Type what you spent ]    |       |      [ ✏️ Type what you spent ]    |
 |               •  ·  ·              |       |               •  ·  ·              |
@@ -101,8 +101,8 @@ EMPTY STATE                                  POPULATED STATE
    * Eliminates bounding boxes.
    * Uses clean, centered, calm typographic hierarchy:
      * Title: *"No expenses yet"* (16sp medium, `textPrimary`).
-     * Subtitle: *"Swipe up to record your first mote"* (14sp regular, `textSecondary`).
-     * Mote Brand Motto: *"Small alone. Meaningful together."* (13sp italic, `textTertiary`).
+     * Subtitle: *"Swipe up to record your first expense"* (14sp regular, `textSecondary`).
+     * Nexpense helper text: *"Simple records. Clearer days."* (13sp italic, `textTertiary`).
 4. **Populated List (`EntryRow`):**
    * 56dp row height with minimum 48dp touch targets.
    * Left: Note description in 16sp regular (`textPrimary`).
@@ -136,7 +136,7 @@ RECEIPT EMPTY STATE                          RECEIPT POPULATED STATE
 |                                    |       |                                    |
 |     /\/\/\/\/\/\/\/\/\/\/\/\/\     |       |     /\/\/\/\/\/\/\/\/\/\/\/\/\     |
 |    |                          |    |       |    |                          |    |
-|    |          MOTE.           |    |       |    |          MOTE.           |    |
+|    |          NEXPENSE           |    |       |    |          NEXPENSE           |    |
 |    |   Monday, Oct 19, 2026   |    |       |    |   Monday, Oct 19, 2026   |    |
 |    |                          |    |       |    |                          |    |
 |    |  - - - - - - - - - - - - |    |       |    | Coffee.............$6.00 |    |
@@ -149,7 +149,7 @@ RECEIPT EMPTY STATE                          RECEIPT POPULATED STATE
 |    |      for this date       |    |       |    |                          |    |
 |    |                          |    |       |    |                          |    |
 |    |  - - - - - - - - - - - - |    |       |    |  - - - - - - - - - - - - |    |
-|    | Every expense is a mote. |    |       |    | Every expense is a mote. |    |
+|    | Your day, item by item. |    |       |    | Your day, item by item. |    |
 |    |                          |    |       |    |                          |    |
 |     \/\/\/\/\/\/\/\/\/\/\/\/\/     |       |     \/\/\/\/\/\/\/\/\/\/\/\/\/     |
 |                                    |       |                                    |
@@ -164,13 +164,13 @@ RECEIPT EMPTY STATE                          RECEIPT POPULATED STATE
    * Clipped to `PerforatedShape` with 6dp triangular zig-zag teeth top and bottom.
    * Surface: `AppTheme.colors.paper` (`#FDFCF7` light / `#19191E` dark) with a soft 1.5dp elevation shadow in light mode, and a 0.5dp hairline border in dark mode.
 3. **Empty Receipt Content (User Approved):**
-   * Centered header: `MOTE.` in bold monospace title.
+   * Centered header: `NEXPENSE` in bold monospace title.
    * Localized date in monospace secondary.
    * Perforated dashed divider (`DashedRule`).
    * **Minimal Line-Art Vector Illustration:** Clean, delicate hairline vector outline of a quiet receipt ledger / empty shopping slip.
    * Stamped receipt note: *"NO EXPENSES RECORDED FOR THIS DATE"* in monospace small caps with `+1.2sp` tracking.
    * Perforated dashed divider.
-   * Brand footer: *"Every expense is a mote."*.
+   * Brand footer: *"Your day, item by item."*.
 4. **Populated Receipt Content:**
    * `LeaderRow` items with dot leaders bridging note descriptions to tabular amounts.
    * `DashedRule` perforated divider.
