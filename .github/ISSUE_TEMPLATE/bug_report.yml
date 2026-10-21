@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible problem in Nexpense.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Please do not include real expense records, passwords, or other private data.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected to happen.
+      placeholder: A concise summary.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the steps that reproduce the problem using fictional sample data.
+      placeholder: |
+        1. Open…
+        2. Enter…
+        3. Observe…
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version or commit
+      placeholder: For example, 1.0.0 or a commit SHA
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version and device
+      placeholder: For example, Android 15, Pixel 8
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or logs
+      description: Remove personal information and use fictional data before attaching anything.
