@@ -9,7 +9,11 @@
 .cxx
 *.apk
 *.aab
+*.keystore
+*.jks
 build/
 app/build/
 parser/build/
+parser/bin/
+ss/
 .kotlin/

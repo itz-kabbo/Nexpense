@@ -12,6 +12,7 @@ import com.yourco.spend.data.repo.ExpenseRepositoryImpl
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -347,7 +348,7 @@ class ExportImportRoundTripTest {
     }
 
     @Test
-    fun csvImport_skipsMalformedAmountRow_andImportsValidRows() = runTest {
+    fun csvImport_rejectsMalformedRow_withoutImportingAnyRows() = runTest {
         val csv = """
         date,time,amount,currency,category,note
         2026-10-15,10:00:00,12.50,USD,food,valid coffee
@@ -356,12 +357,10 @@ class ExportImportRoundTripTest {
         """.trimIndent()
 
         val result = dataImporter.importCsv(csv)
-        assertTrue(result.success)
-        assertEquals(2, result.expensesImported)
+        assertFalse(result.success)
+        assertEquals(0, result.expensesImported)
 
         val expenses = expenseDao.getAll()
-        assertEquals(2, expenses.size)
-        assertTrue(expenses.any { it.note == "valid coffee" && it.amountMinor == 1250L })
-        assertTrue(expenses.any { it.note == "valid cab" && it.amountMinor == 4500L })
+        assertTrue(expenses.isEmpty())
     }
 }

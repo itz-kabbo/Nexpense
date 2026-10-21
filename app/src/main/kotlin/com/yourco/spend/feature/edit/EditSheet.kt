@@ -21,6 +21,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -53,7 +55,11 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Parses user input into Long minor units.
@@ -138,13 +144,23 @@ fun EditSheetContent(
     var noteText by rememberSaveable(key = "${expense.id}_note") { mutableStateOf(expense.note) }
     var selectedCategoryId by rememberSaveable(key = "${expense.id}_category") { mutableStateOf(expense.categoryId) }
     var selectedLocalDate by rememberSaveable(key = "${expense.id}_date") { mutableStateOf(expense.localDate) }
+    var selectedLocalTime by rememberSaveable(key = "${expense.id}_time") {
+        mutableStateOf(
+            Instant.ofEpochMilli(expense.createdAt)
+                .atZone(ZoneId.systemDefault())
+                .toLocalTime()
+                .format(DateTimeFormatter.ofPattern("HH:mm")),
+        )
+    }
 
     var showCategoryPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
     // VERIFY: Predictive back / BackHandler on EditSheet
     BackHandler {
         when {
+            showTimePicker -> showTimePicker = false
             showDatePicker -> showDatePicker = false
             showCategoryPicker -> showCategoryPicker = false
             else -> onCancel()
@@ -197,6 +213,11 @@ fun EditSheetContent(
                             note = noteText.trim(),
                             categoryId = selectedCategoryId,
                             localDate = selectedLocalDate,
+                            createdAt = LocalDate.parse(selectedLocalDate)
+                                .atTime(LocalTime.parse(selectedLocalTime))
+                                .atZone(ZoneId.systemDefault())
+                                .toInstant()
+                                .toEpochMilli(),
                         )
                         onSave(updated)
                     }
@@ -279,6 +300,26 @@ fun EditSheetContent(
             CategoryChip(
                 categoryName = categoryDisplayName,
                 onClick = { showCategoryPicker = true },
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 48.dp)
+                .clickable(role = Role.Button, onClick = { showTimePicker = true })
+                .padding(vertical = AppTheme.spacing.s),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.time),
+                style = AppTheme.typography.body.copy(color = AppTheme.colors.textSecondary),
+            )
+            Text(
+                text = selectedLocalTime,
+                style = AppTheme.typography.body.copy(color = AppTheme.colors.textPrimary),
+                modifier = Modifier.semantics { contentDescription = selectedLocalTime },
             )
         }
 
@@ -377,5 +418,33 @@ fun EditSheetContent(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showTimePicker) {
+        val initialTime = LocalTime.parse(selectedLocalTime)
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialTime.hour,
+            initialMinute = initialTime.minute,
+            is24Hour = true,
+        )
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text(stringResource(R.string.time)) },
+            text = { TimePicker(state = timePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedLocalTime = String.format(Locale.ROOT, "%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    showTimePicker = false
+                }) {
+                    Text(stringResource(R.string.save), color = AppTheme.colors.textPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text(stringResource(R.string.cancel), color = AppTheme.colors.textSecondary)
+                }
+            },
+            containerColor = AppTheme.colors.surface,
+        )
     }
 }

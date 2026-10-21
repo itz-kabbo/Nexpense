@@ -199,15 +199,15 @@ class EmptyStatesAndEdgeCasesTest {
     fun darkModeAndLightMode_tokensMeetContrastRequirements() {
         val lightColors = lightAppColors()
         assertFalse(lightColors.isDark)
-        assertEquals(0xFFFFFFFF, lightColors.background.value.toLong().shr(32).and(0xFFFFFFFF))
-        assertEquals(0xFFF6F6F4, lightColors.surface.value.toLong().shr(32).and(0xFFFFFFFF))
-        assertEquals(0xFFFBFAF6, lightColors.paper.value.toLong().shr(32).and(0xFFFFFFFF))
+        assertEquals(0xFFFBFBF9, lightColors.background.value.toLong().shr(32).and(0xFFFFFFFF))
+        assertEquals(0xFFFFFFFF, lightColors.surface.value.toLong().shr(32).and(0xFFFFFFFF))
+        assertEquals(0xFFFDFCF7, lightColors.paper.value.toLong().shr(32).and(0xFFFFFFFF))
 
         val darkColors = darkAppColors()
         assertTrue(darkColors.isDark)
-        assertEquals(0xFF000000, darkColors.background.value.toLong().shr(32).and(0xFFFFFFFF))
-        assertEquals(0xFF121212, darkColors.surface.value.toLong().shr(32).and(0xFFFFFFFF))
-        assertEquals(0xFF1A1A1A, darkColors.paper.value.toLong().shr(32).and(0xFFFFFFFF))
+        assertEquals(0xFF09090B, darkColors.background.value.toLong().shr(32).and(0xFFFFFFFF))
+        assertEquals(0xFF141417, darkColors.surface.value.toLong().shr(32).and(0xFFFFFFFF))
+        assertEquals(0xFF19191E, darkColors.paper.value.toLong().shr(32).and(0xFFFFFFFF))
     }
 
     @Test

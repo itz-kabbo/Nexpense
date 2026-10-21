@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
@@ -85,7 +86,12 @@ class DefaultTodayObserver(
                 addAction(Intent.ACTION_TIME_CHANGED)
                 addAction(Intent.ACTION_TIMEZONE_CHANGED)
             }
-            context.registerReceiver(receiver, filter)
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
             awaitClose {
                 try {
                     context.unregisterReceiver(receiver)

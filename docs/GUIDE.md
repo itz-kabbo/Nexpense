@@ -1,6 +1,6 @@
-# Mote. for Android — AI Agent Build Guide
+# Nexpense for Android — Product & Engineering Guide
 
-*Prepared October 15, 2026 from the public App Store listing and the developer’s website. Screenshots, preview videos and the app binary were not accessible, so pixel-level details are flagged for verification.*
+*Nexpense is an independent Android expense tracker inspired by [Mote. — Minimal Expense Tracker](https://apps.apple.com/au/app/mote/id6816360396), an iOS app by Yun Ju Tseng (Rice Tseng). This guide records product research and implementation decisions for Nexpense; the projects are not affiliated. Research was prepared from public sources on October 15, 2026. Screenshots, preview videos and the original app binary were not accessible, so pixel-level details are flagged for verification.*
 
 ## 0. How to use this guide
 
@@ -31,7 +31,7 @@ Rules for the agent:
 
 | Item | Value |
 | --- | --- |
-| Name / tagline | Mote. — “Minimal Expense Tracker” |
+| Name / tagline | [Mote. — “Minimal Expense Tracker”](https://apps.apple.com/au/app/mote/id6816360396) |
 | Developer | Yun Ju Tseng (site branded “Rice Tseng”), solo indie |
 | Category / price | Finance, free, no ads, no analytics |
 | Size | 3.3 MB |
@@ -149,7 +149,7 @@ Default navigation: a horizontal pager with three pages (Record, Receipt, Insigh
 
 **Edit sheet.** Tap a row to edit amount, description, category and date/time. Swipe a row to delete; a snackbar offers Undo for 5 seconds.
 
-**Settings.** Appearance (System / Light / Dark), Language (System / English / 繁體中文), Currency (defaults to the device locale), Categories (rename, reorder, hide, add), Export / Import, About and privacy.
+**Settings.** Appearance (System / Light / Dark), Language (System or any supported locale), Currency (defaults to the device locale), Categories (rename, reorder, hide, add), Export / Import, Wipe all data, About and privacy.
 
 ### 3.3 Design tokens (proposed) \[Verify\]
 
@@ -602,7 +602,7 @@ fun RecordScreen(vm: RecordViewModel = hiltViewModel()) {
 }
 ```
 
-- `EntryViewModel` exposes `text`, a `preview` (Valid with amount, note and category; NeedsAmount; Empty), `onTextChange`, `onCategoryPicked` and `submit()`. `submit()` computes `local_date` from the injected `Clock`, inserts the row, clears the text, and triggers the confirm haptic.
+- `EntryViewModel` exposes `text`, a `preview` (Valid with amount, note and category; NeedsAmount; Empty), `onTextChange`, `onCategoryPicked` and `submit()`. `submit()` computes `local_date` from the injected `Clock`, inserts the row, and only clears the text and triggers the confirm haptic after the insert succeeds. Failed writes keep the draft available for retry.
 - Keep the typed text in `rememberSaveable` so rotation does not lose it. Handle back with `PredictiveBackHandler`: first back collapses the sheet.
 
 **Done when:** a Compose UI test expands the sheet, types `6 coffee`, sees `6.00 · coffee · Food & Drink` in the preview, presses Done, and finds the new row; and on a physical device the sheet and keyboard rise as one motion.
@@ -612,7 +612,7 @@ fun RecordScreen(vm: RecordViewModel = hiltViewModel()) {
 **Goal:** everything you can do to an entry after it exists.
 
 - Today list bound to `observeDay`, total bound to `observeTotal`.
-- Tap a row for the edit sheet (amount, description, category, date and time). Changing the date recomputes `local_date`.
+- Tap a row for the edit sheet (amount, description, category, date and time). Changing the date or time updates both `local_date` and `created_at` from the chosen local date/time in the current device zone.
 - Swipe to delete with `SwipeToDismissBox`; a snackbar offers Undo for 5 seconds, which calls `restore`.
 - Picking a different category upserts `learned_mapping` for that lowercased note, and the repository exposes the map as a `StateFlow` that the parser’s `learned` lambda reads.
 
@@ -695,9 +695,9 @@ fun LeaderRow(label: String, amount: String, style: TextStyle, modifier: Modifie
 **Goal:** everything around the core loop.
 
 - **Appearance:** System / Light / Dark stored in DataStore and fed to `AppTheme`.
-- **Language:** `res/xml/locales_config.xml` listing `en` and `zh-TW`, referenced by `android:localeConfig`; switch with `AppCompatDelegate.setApplicationLocales` (the AppCompat backport covers pre-13 devices). Every user-visible string, including category names and receipt labels, lives in `values/strings.xml` and `values-zh-rTW/strings.xml`.
+- **Language:** `res/xml/locales_config.xml` lists the 26 languages in `LanguageCatalog`, referenced by `android:localeConfig`; Indonesian and Hebrew use Android's `id` and `he` tags while their legacy resource directories remain `values-in` and `values-iw`. Switch with `AppCompatDelegate.setApplicationLocales` (the AppCompat backport covers pre-13 devices). Every user-visible string, including category names and receipt labels, lives in `values/strings.xml` and `values-zh-rTW/strings.xml`; other translations fall back to English when a key is absent.
 - **Currency:** default from the device locale with a fallback of USD; override in Settings. Each row keeps its own currency code, and the DAO queries gain `AND currency = :currency` so totals never mix units. Changing currency affects new entries only. \[Verify\]
-- **Export and import:** JSON with a `schema` version number, categories and expenses; CSV with date, time, amount, currency, category and note. Use `CreateDocument` and `OpenDocument` contracts. Import de-duplicates by `id` and never overwrites a row with a newer `updated_at`.
+- **Export and import:** JSON with a `schema` version number, categories and expenses; CSV with date, time, amount, currency, category and note. JSON is the full expense/category backup and preserves deletion markers; CSV is a lossy interchange format. Use `CreateDocument` and `OpenDocument` contracts. Import validates the full file before a Room transaction, de-duplicates by `id`, and never overwrites a row with a newer `updated_at`.
 - **Backup:** `data_extraction_rules.xml` and `backup_rules.xml` include the Room database and DataStore files and exclude caches. Test with `adb shell bmgr`.
 
 **Done when:** switching language applies without a restart, export then wipe then import restores identical rows (round-trip test), and the backup rules pass lint.

@@ -41,6 +41,7 @@ class EntryViewModel @Inject constructor(
 
     companion object {
         const val KEY_TYPED_TEXT = "typed_text"
+        const val KEY_SELECTED_CATEGORY_OVERRIDE = "selected_category_override"
     }
 
     val text: StateFlow<String> = savedStateHandle.getStateFlow(KEY_TYPED_TEXT, "")
@@ -48,8 +49,10 @@ class EntryViewModel @Inject constructor(
     private val _preview = MutableStateFlow<EntryPreview>(EntryPreview.Empty)
     val preview: StateFlow<EntryPreview> = _preview.asStateFlow()
 
-    private val _selectedCategoryOverride = MutableStateFlow<String?>(null)
-    val selectedCategoryOverride: StateFlow<String?> = _selectedCategoryOverride.asStateFlow()
+    val selectedCategoryOverride: StateFlow<String?> = savedStateHandle.getStateFlow(KEY_SELECTED_CATEGORY_OVERRIDE, null)
+
+    private val _isSubmitting = MutableStateFlow(false)
+    val isSubmitting: StateFlow<Boolean> = _isSubmitting.asStateFlow()
 
     private val _categories = MutableStateFlow<List<CategoryEntity>>(emptyList())
     val categories: StateFlow<List<CategoryEntity>> = _categories.asStateFlow()
@@ -59,6 +62,9 @@ class EntryViewModel @Inject constructor(
 
     private val _confirmHapticEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val confirmHapticEvents: SharedFlow<Unit> = _confirmHapticEvents.asSharedFlow()
+
+    private val _submitResultEvents = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val submitResultEvents: SharedFlow<Boolean> = _submitResultEvents.asSharedFlow()
 
     private var activeParser: ExpenseParser = expenseParser
 
@@ -95,17 +101,18 @@ class EntryViewModel @Inject constructor(
     fun onTextChange(newText: String) {
         savedStateHandle[KEY_TYPED_TEXT] = newText
         if (newText.isBlank()) {
-            _selectedCategoryOverride.value = null
+            savedStateHandle[KEY_SELECTED_CATEGORY_OVERRIDE] = null
         }
         recomputePreview(newText)
     }
 
     fun onCategoryPicked(categoryId: String) {
-        _selectedCategoryOverride.value = categoryId
+        savedStateHandle[KEY_SELECTED_CATEGORY_OVERRIDE] = categoryId
         recomputePreview(text.value)
     }
 
     fun submit(): Boolean {
+        if (_isSubmitting.value) return false
         val currentPreview = _preview.value
         if (currentPreview !is EntryPreview.Valid) return false
 
@@ -113,7 +120,7 @@ class EntryViewModel @Inject constructor(
         val amountMinor = currentPreview.amountMinor
         val note = currentPreview.note
         val categoryId = currentPreview.categoryId
-        val override = _selectedCategoryOverride.value
+        val override = selectedCategoryOverride.value
         val currency = _currencyCode.value
         val now = clock.millis()
         val localDate = todayObserver.currentLocalDate().toString()
@@ -131,17 +138,24 @@ class EntryViewModel @Inject constructor(
             deletedAt = null,
         )
 
+        _isSubmitting.value = true
         viewModelScope.launch {
-            expenseRepository.add(entity)
-            if (override != null && note.isNotBlank()) {
-                learnedMappingRepository.recordMapping(note, override)
+            try {
+                expenseRepository.add(entity)
+                savedStateHandle[KEY_TYPED_TEXT] = ""
+                savedStateHandle[KEY_SELECTED_CATEGORY_OVERRIDE] = null
+                _preview.value = EntryPreview.Empty
+                if (override != null && note.isNotBlank()) {
+                    runCatching { learnedMappingRepository.recordMapping(note, override) }
+                }
+                _confirmHapticEvents.tryEmit(Unit)
+                _submitResultEvents.tryEmit(true)
+            } catch (_: Exception) {
+                _submitResultEvents.tryEmit(false)
+            } finally {
+                _isSubmitting.value = false
             }
-            _confirmHapticEvents.tryEmit(Unit)
         }
-
-        savedStateHandle[KEY_TYPED_TEXT] = ""
-        _selectedCategoryOverride.value = null
-        _preview.value = EntryPreview.Empty
         return true
     }
 
@@ -160,7 +174,7 @@ class EntryViewModel @Inject constructor(
             }
             is ParseResult.Ok -> {
                 val parsed = result.value
-                val categoryId = _selectedCategoryOverride.value ?: parsed.categoryId
+                val categoryId = selectedCategoryOverride.value ?: parsed.categoryId
                 val categoryEntity = _categories.value.firstOrNull { it.id == categoryId }
                 val categoryName = categoryEntity?.nameOverride ?: defaultCategoryName(categoryId)
                 val formattedAmount = formatMinor(parsed.amountMinor, _currencyCode.value)

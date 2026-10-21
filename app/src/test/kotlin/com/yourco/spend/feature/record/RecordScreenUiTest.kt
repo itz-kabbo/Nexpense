@@ -114,7 +114,7 @@ class RecordScreenUiTest {
         }
 
         // Initially empty state is visible
-        composeTestRule.onNodeWithText("Nothing yet. Swipe up.").assertIsDisplayed()
+        composeTestRule.onNodeWithText("No expenses yet").assertIsDisplayed()
 
         // 1. Expand the sheet
         composeTestRule.runOnIdle {
@@ -374,7 +374,7 @@ class RecordScreenUiTest {
         // 2. Assert "Deleted" and "Undo" appear on Snackbar, and empty state is shown
         composeTestRule.onNodeWithText("Deleted").assertIsDisplayed()
         composeTestRule.onNodeWithText("Undo").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Nothing yet. Swipe up.").assertIsDisplayed()
+        composeTestRule.onNodeWithText("No expenses yet").assertIsDisplayed()
 
         // 3. Click "Undo" on the Snackbar
         composeTestRule.onNodeWithText("Undo").performClick()

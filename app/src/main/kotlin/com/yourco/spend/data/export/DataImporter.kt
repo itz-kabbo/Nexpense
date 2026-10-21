@@ -13,6 +13,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.Clock
+import java.util.Currency
+import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,17 +36,21 @@ open class DataImporter @Inject constructor(
     open suspend fun importJson(jsonString: String): ImportResult {
         return try {
             val root = JSONObject(jsonString)
-            val schema = root.optInt("schema", 0)
-            if (schema < 1) {
-                return ImportResult(0, 0, success = false, error = "Unsupported schema version: $schema")
+            val schemaValue = root.opt("schema")
+            if (schemaValue !is Number || schemaValue.toString() != "1") {
+                return ImportResult(0, 0, success = false, error = "Unsupported schema version: ${schemaValue ?: "missing"}")
             }
 
-            var categoriesCount = 0
+            val categories = mutableListOf<CategoryEntity>()
+            val categoryIds = mutableSetOf<String>()
             val categoriesArray = root.optJSONArray("categories")
             if (categoriesArray != null) {
                 for (i in 0 until categoriesArray.length()) {
                     val catObj = categoriesArray.getJSONObject(i)
                     val id = catObj.getString("id")
+                    if (id.isBlank() || !categoryIds.add(id)) {
+                        return ImportResult(0, 0, success = false, error = "Invalid or duplicate category id")
+                    }
                     val nameOverride = if (catObj.isNull("name_override")) null else catObj.getString("name_override")
                     val icon = catObj.optString("icon", "category")
                     val sortOrder = catObj.optInt("sort_order", i)
@@ -59,51 +65,63 @@ open class DataImporter @Inject constructor(
                         isHidden = isHidden,
                         isBuiltin = isBuiltin,
                     )
-                    categoryDao.upsert(category)
-                    categoriesCount++
+                    categories += category
                 }
             }
 
-            var expensesCount = 0
-            val expensesArray = root.optJSONArray("expenses")
-            if (expensesArray != null) {
-                for (i in 0 until expensesArray.length()) {
-                    val expObj = expensesArray.getJSONObject(i)
-                    val id = expObj.getString("id")
-                    val amountMinor = expObj.getLong("amount_minor")
-                    val currency = expObj.getString("currency")
-                    val note = expObj.optString("note", "")
-                    val rawText = expObj.optString("raw_text", note)
-                    val categoryId = expObj.getString("category_id")
-                    val createdAt = expObj.getLong("created_at")
-                    val localDate = expObj.getString("local_date")
-                    val updatedAt = expObj.getLong("updated_at")
-                    val deletedAt = if (expObj.isNull("deleted_at")) null else expObj.getLong("deleted_at")
+            val existingCategoryIds = categoryDao.getAll().mapTo(mutableSetOf()) { it.id }
+            val validCategoryIds = existingCategoryIds + categoryIds + CategoryEntity.DEFAULT_CATEGORIES.map { it.id }
+            val expenses = mutableListOf<ExpenseEntity>()
+            val expenseIds = mutableSetOf<String>()
+            val expensesArray = root.getJSONArray("expenses")
+            for (i in 0 until expensesArray.length()) {
+                val expObj = expensesArray.getJSONObject(i)
+                val id = expObj.getString("id")
+                val amountMinor = expObj.getLong("amount_minor")
+                val currency = expObj.getString("currency")
+                val note = expObj.optString("note", "")
+                val rawText = expObj.optString("raw_text", note)
+                val categoryId = expObj.getString("category_id")
+                val createdAt = expObj.getLong("created_at")
+                val localDate = expObj.getString("local_date")
+                val updatedAt = expObj.getLong("updated_at")
+                val deletedAt = if (expObj.isNull("deleted_at")) null else expObj.getLong("deleted_at")
 
-                    val incoming = ExpenseEntity(
-                        id = id,
-                        amountMinor = amountMinor,
-                        currency = currency,
-                        note = note,
-                        rawText = rawText,
-                        categoryId = categoryId,
-                        createdAt = createdAt,
-                        localDate = localDate,
-                        updatedAt = updatedAt,
-                        deletedAt = deletedAt,
-                    )
-
-                    val existing = expenseDao.getById(id)
-                    if (existing == null || incoming.updatedAt > existing.updatedAt) {
-                        expenseDao.upsert(incoming)
-                        expensesCount++
-                    }
+                if (id.isBlank() || !expenseIds.add(id)) {
+                    return ImportResult(0, 0, success = false, error = "Invalid or duplicate expense id")
                 }
+                if (!isValidAmount(amountMinor, currency)) {
+                    return ImportResult(0, 0, success = false, error = "Invalid amount or currency for expense $id")
+                }
+                if (categoryId !in validCategoryIds) {
+                    return ImportResult(0, 0, success = false, error = "Unknown category $categoryId")
+                }
+                if (!isValidLocalDate(localDate) || createdAt < 0L || updatedAt < 0L ||
+                    (deletedAt != null && deletedAt < 0L)
+                ) {
+                    return ImportResult(0, 0, success = false, error = "Invalid date or timestamp for expense $id")
+                }
+
+                val incoming = ExpenseEntity(
+                    id = id,
+                    amountMinor = amountMinor,
+                    currency = currency,
+                    note = note,
+                    rawText = rawText,
+                    categoryId = categoryId,
+                    createdAt = createdAt,
+                    localDate = localDate,
+                    updatedAt = updatedAt,
+                    deletedAt = deletedAt,
+                )
+
+                expenses += incoming
             }
 
+            val counts = expenseDao.applyImportBatch(categories, expenses)
             ImportResult(
-                expensesImported = expensesCount,
-                categoriesImported = categoriesCount,
+                expensesImported = counts.expensesImported,
+                categoriesImported = counts.categoriesImported,
                 success = true,
             )
         } catch (e: Exception) {
@@ -118,7 +136,7 @@ open class DataImporter @Inject constructor(
                 return ImportResult(0, 0, success = true)
             }
 
-            val header = rows[0].map { it.trim().lowercase() }
+            val header = rows[0].map { it.trim().removePrefix("\uFEFF").lowercase(Locale.ROOT) }
             val dateIdx = header.indexOf("date")
             val timeIdx = header.indexOf("time")
             val amountIdx = header.indexOf("amount")
@@ -130,30 +148,36 @@ open class DataImporter @Inject constructor(
                 return ImportResult(0, 0, success = false, error = "Missing required CSV columns in header")
             }
 
-            var expensesCount = 0
+            val validCategoryIds = (categoryDao.getAll().map { it.id } + CategoryEntity.DEFAULT_CATEGORIES.map { it.id }).toSet()
+            val expenses = mutableListOf<ExpenseEntity>()
+            val duplicateOccurrences = mutableMapOf<String, Int>()
             for (rowIndex in 1 until rows.size) {
                 val row = rows[rowIndex]
-                if (row.size <= maxOf(dateIdx, amountIdx, currencyIdx, categoryIdx)) continue
+                if (row.size <= maxOf(dateIdx, amountIdx, currencyIdx, categoryIdx)) {
+                    return ImportResult(0, 0, success = false, error = "CSV row ${rowIndex + 1} is missing required values")
+                }
 
                 val dateStr = row[dateIdx].trim()
                 val timeStr = if (timeIdx != -1 && timeIdx < row.size) row[timeIdx].trim() else "12:00:00"
                 val amountStr = row[amountIdx].trim()
-                val currency = row[currencyIdx].trim().uppercase()
+                val currency = row[currencyIdx].trim().uppercase(Locale.ROOT)
                 val categoryId = row[categoryIdx].trim()
                 val note = if (noteIdx != -1 && noteIdx < row.size) row[noteIdx].trim() else ""
 
-                if (dateStr.isBlank() || amountStr.isBlank()) continue
+                if (dateStr.isBlank() || amountStr.isBlank() || currency.isBlank() || categoryId.isBlank()) {
+                    return ImportResult(0, 0, success = false, error = "CSV row ${rowIndex + 1} has blank required values")
+                }
 
                 val localDate = try {
                     LocalDate.parse(dateStr)
                 } catch (_: Exception) {
-                    continue
+                    return ImportResult(0, 0, success = false, error = "CSV row ${rowIndex + 1} has an invalid date")
                 }
 
                 val localTime = try {
                     LocalTime.parse(timeStr)
                 } catch (_: Exception) {
-                    LocalTime.NOON
+                    return ImportResult(0, 0, success = false, error = "CSV row ${rowIndex + 1} has an invalid time")
                 }
 
                 val createdAt = localDate.atTime(localTime).atZone(zoneId).toInstant().toEpochMilli()
@@ -164,11 +188,21 @@ open class DataImporter @Inject constructor(
                         .movePointRight(digits)
                         .longValueExact()
                 } catch (_: Exception) {
-                    continue
+                    return ImportResult(0, 0, success = false, error = "CSV row ${rowIndex + 1} has an invalid amount")
                 }
 
-                val id = UUID.nameUUIDFromBytes("$dateStr-$timeStr-$amountMinor-$currency-$categoryId-$note".toByteArray(Charsets.UTF_8)).toString()
-                val incoming = ExpenseEntity(
+                if (!isValidAmount(amountMinor, currency)) {
+                    return ImportResult(0, 0, success = false, error = "CSV row ${rowIndex + 1} has an invalid amount or currency")
+                }
+                if (categoryId !in validCategoryIds) {
+                    return ImportResult(0, 0, success = false, error = "CSV row ${rowIndex + 1} has an unknown category")
+                }
+
+                val fingerprint = "$dateStr-$timeStr-$amountMinor-$currency-$categoryId-$note"
+                val occurrence = duplicateOccurrences.getOrDefault(fingerprint, 0)
+                duplicateOccurrences[fingerprint] = occurrence + 1
+                val id = UUID.nameUUIDFromBytes("$fingerprint#$occurrence".toByteArray(Charsets.UTF_8)).toString()
+                expenses += ExpenseEntity(
                     id = id,
                     amountMinor = amountMinor,
                     currency = currency,
@@ -180,16 +214,11 @@ open class DataImporter @Inject constructor(
                     updatedAt = createdAt,
                     deletedAt = null,
                 )
-
-                val existing = expenseDao.getById(id)
-                if (existing == null || incoming.updatedAt > existing.updatedAt) {
-                    expenseDao.upsert(incoming)
-                    expensesCount++
-                }
             }
 
+            val counts = expenseDao.applyImportBatch(emptyList(), expenses)
             ImportResult(
-                expensesImported = expensesCount,
+                expensesImported = counts.expensesImported,
                 categoriesImported = 0,
                 success = true,
             )
@@ -256,10 +285,28 @@ open class DataImporter @Inject constructor(
             }
             i++
         }
+        if (inQuotes) throw IllegalArgumentException("Unterminated quoted CSV field")
         if (currentRow.isNotEmpty() || currentField.isNotEmpty()) {
             currentRow.add(currentField.toString())
             rows.add(currentRow.toList())
         }
         return rows.filter { row -> row.any { it.isNotBlank() } }
+    }
+
+    private fun isValidLocalDate(value: String): Boolean = try {
+        LocalDate.parse(value).toString() == value
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun isValidAmount(amountMinor: Long, currencyCode: String): Boolean {
+        if (amountMinor <= 0L || currencyCode.length != 3 || currencyCode != currencyCode.uppercase(Locale.ROOT)) return false
+        val digits = try {
+            Currency.getInstance(currencyCode).defaultFractionDigits.coerceAtLeast(0)
+        } catch (_: Exception) {
+            return false
+        }
+        val amount = BigDecimal.valueOf(amountMinor, digits)
+        return amount <= BigDecimal("10000000")
     }
 }

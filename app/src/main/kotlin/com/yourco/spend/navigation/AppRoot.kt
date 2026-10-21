@@ -23,7 +23,9 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +78,13 @@ fun AppRoot(
                 )
             } else {
                 val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
+                val recordSheetState = rememberStandardBottomSheetState(
+                    initialValue = SheetValue.PartiallyExpanded,
+                    skipHiddenState = true,
+                )
                 val coroutineScope = rememberCoroutineScope()
+                val isRecordSheetExpanded = pagerState.currentPage == 0 &&
+                    (recordSheetState.targetValue == SheetValue.Expanded || recordSheetState.currentValue == SheetValue.Expanded)
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     HorizontalPager(
@@ -84,30 +92,35 @@ fun AppRoot(
                         modifier = Modifier.fillMaxSize(),
                     ) { page ->
                         when (page) {
-                            0 -> RecordScreen(onNavigateToSettings = {
-                                if (onNavigateToSettings != null) {
-                                    onNavigateToSettings()
-                                } else {
-                                    showSettings = true
-                                }
-                            })
+                            0 -> RecordScreen(
+                                sheetState = recordSheetState,
+                                onNavigateToSettings = {
+                                    if (onNavigateToSettings != null) {
+                                        onNavigateToSettings()
+                                    } else {
+                                        showSettings = true
+                                    }
+                                },
+                            )
                             1 -> ReceiptScreen()
                             2 -> InsightScreen()
                         }
                     }
 
-                    ThreeDotIndicator(
-                        pagerState = pagerState,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .navigationBarsPadding()
-                            .padding(bottom = 8.dp),
-                        onDotClick = { targetPage ->
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(targetPage)
-                            }
-                        },
-                    )
+                    if (!isRecordSheetExpanded) {
+                        ThreeDotIndicator(
+                            pagerState = pagerState,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .navigationBarsPadding()
+                                .padding(bottom = 8.dp),
+                            onDotClick = { targetPage ->
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(targetPage)
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -119,7 +132,12 @@ fun AppRoot(
 internal fun TwoPaneRoot(
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    recordPane: @Composable () -> Unit = { RecordScreen(onNavigateToSettings = onNavigateToSettings) },
+    recordPane: @Composable () -> Unit = {
+        RecordScreen(
+            onNavigateToSettings = onNavigateToSettings,
+            forceCenteredEntryDialog = true,
+        )
+    },
     receiptPane: @Composable () -> Unit = { ReceiptScreen() },
     insightPane: @Composable () -> Unit = { InsightScreen() },
 ) {

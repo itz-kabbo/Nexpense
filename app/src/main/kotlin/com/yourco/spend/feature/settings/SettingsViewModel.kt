@@ -40,6 +40,9 @@ class SettingsViewModel @Inject constructor(
     private val _messageEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val messageEvents: SharedFlow<String> = _messageEvents.asSharedFlow()
 
+    private val _wipeResultEvents = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val wipeResultEvents = _wipeResultEvents.asSharedFlow()
+
     val state: StateFlow<SettingsUiState> = combine(
         settingsRepository.themeMode,
         settingsRepository.languageTag,
@@ -120,6 +123,22 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun moveCategory(id: String, offset: Int) {
+        viewModelScope.launch {
+            val categories = categoryRepository.getAll().sortedBy { it.sortOrder }.toMutableList()
+            val from = categories.indexOfFirst { it.id == id }
+            val to = from + offset
+            if (from !in categories.indices || to !in categories.indices) return@launch
+            val moved = categories.removeAt(from)
+            categories.add(to, moved)
+            categories.forEachIndexed { index, category ->
+                if (category.sortOrder != index) {
+                    categoryRepository.upsert(category.copy(sortOrder = index))
+                }
+            }
+        }
+    }
+
     fun addCustomCategory(name: String) {
         val trimmed = name.trim()
         if (trimmed.isBlank()) return
@@ -136,6 +155,19 @@ class SettingsViewModel @Inject constructor(
                 isBuiltin = false,
             )
             categoryRepository.upsert(newCategory)
+        }
+    }
+
+    fun wipeAllData() {
+        viewModelScope.launch {
+            try {
+                expenseRepository.clearUserData()
+                settingsRepository.clearAllSettings()
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+                _wipeResultEvents.tryEmit(true)
+            } catch (_: Exception) {
+                _wipeResultEvents.tryEmit(false)
+            }
         }
     }
 

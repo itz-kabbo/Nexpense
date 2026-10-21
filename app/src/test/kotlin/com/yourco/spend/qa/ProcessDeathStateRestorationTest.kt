@@ -21,6 +21,7 @@ import com.yourco.spend.feature.record.RecordViewModel
 import com.yourco.spend.parser.ExpenseParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -97,6 +98,7 @@ class ProcessDeathStateRestorationTest {
 
     @Test
     fun entryViewModel_preservesDraftTextAcrossProcessDeath() = runTest(testDispatcher) {
+        categoryRepo.seedDefaultsIfEmpty()
         val savedStateHandle = SavedStateHandle()
 
         // 1. Initial ViewModel typing draft text
@@ -134,8 +136,11 @@ class ProcessDeathStateRestorationTest {
         assertEquals("groceries", validPreview.note)
 
         // 3. Submitting clears SavedStateHandle
+        val submitResult = async(UnconfinedTestDispatcher(testScheduler)) {
+            vmRestored.submitResultEvents.first()
+        }
         assertTrue(vmRestored.submit())
-        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(submitResult.await())
         assertEquals("", savedStateHandle[EntryViewModel.KEY_TYPED_TEXT])
     }
 

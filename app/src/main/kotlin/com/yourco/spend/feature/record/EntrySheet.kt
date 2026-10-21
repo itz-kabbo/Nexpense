@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,11 +61,14 @@ fun EntrySheet(
     viewModel: EntryViewModel = hiltViewModel(),
     focusRequester: FocusRequester = remember { FocusRequester() },
     onSaved: () -> Unit = {},
+    onSaveFailed: () -> Unit = {},
 ) {
     val text by viewModel.text.collectAsStateWithLifecycle()
     val preview by viewModel.preview.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val selectedCategoryOverride by viewModel.selectedCategoryOverride.collectAsStateWithLifecycle()
+    val currentOnSaved by rememberUpdatedState(onSaved)
+    val currentOnSaveFailed by rememberUpdatedState(onSaveFailed)
     var showCategoryPicker by remember { mutableStateOf(false) }
 
     val haptic = LocalHapticFeedback.current
@@ -78,6 +82,12 @@ fun EntrySheet(
             } else {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             }
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.submitResultEvents.collect { saved ->
+            if (saved) currentOnSaved() else currentOnSaveFailed()
         }
     }
 
@@ -112,7 +122,6 @@ fun EntrySheet(
                 onDone = {
                     if (preview is EntryPreview.Valid) {
                         viewModel.submit()
-                        onSaved()
                     }
                 }
             ),
@@ -172,6 +181,7 @@ fun EntrySheet(
                         )
                         CategoryChip(
                             categoryName = categoryDisplayName,
+                            hasDropdown = true,
                             onClick = { showCategoryPicker = true },
                         )
                     }

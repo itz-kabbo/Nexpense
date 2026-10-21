@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Mote"
+rootProject.name = "Nexpense"
 include(":app")
 include(":parser")

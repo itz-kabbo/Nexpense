@@ -3,17 +3,27 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Outer delicate ring -->
+    <group
+        android:name="coin_group"
+        android:pivotX="54"
+        android:pivotY="61">
+        <path
+            android:name="coin_path"
+            android:fillColor="@color/splash_icon"
+            android:pathData="M 54,61 m -6.5,0 a 6.5,6.5 0 1,1 13,0 a 6.5,6.5 0 1,1 -13,0" />
+    </group>
     <path
+        android:name="stem_path"
         android:strokeColor="@color/splash_icon"
-        android:strokeWidth="2.5"
-        android:pathData="M 54,54 m -24,0 a 24,24 0 1,1 48,0 a 24,24 0 1,1 -48,0" />
-    <!-- Center mote particle -->
+        android:strokeWidth="10"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 36,32 L 36,76" />
     <path
-        android:fillColor="@color/splash_icon"
-        android:pathData="M 54,54 m -10,0 a 10,10 0 1,1 20,0 a 10,10 0 1,1 -20,0" />
-    <!-- Small accent mote satellite dot -->
-    <path
-        android:fillColor="@color/splash_icon"
-        android:pathData="M 72,36 m -3,0 a 3,3 0 1,1 6,0 a 3,3 0 1,1 -6,0" />
+        android:name="arch_path"
+        android:strokeColor="@color/splash_icon"
+        android:strokeWidth="10"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 36,50 C 36,40.06 44.06,32 54,32 C 63.94,32 72,40.06 72,50 L 72,76" />
 </vector>

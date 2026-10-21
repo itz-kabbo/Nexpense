@@ -60,10 +60,16 @@ class CsvExporter @Inject constructor(
     }
 
     private fun escapeCsv(value: String): String {
-        return if (value.contains(',') || value.contains('"') || value.contains('\n') || value.contains('\r')) {
-            "\"" + value.replace("\"", "\"\"") + "\""
+        val spreadsheetSafeValue = when (value.trimStart().firstOrNull()) {
+            '=', '+', '-', '@' -> "'" + value
+            else -> value
+        }
+        return if (spreadsheetSafeValue.contains(',') || spreadsheetSafeValue.contains('"') ||
+            spreadsheetSafeValue.contains('\n') || spreadsheetSafeValue.contains('\r')
+        ) {
+            "\"" + spreadsheetSafeValue.replace("\"", "\"\"") + "\""
         } else {
-            value
+            spreadsheetSafeValue
         }
     }
 }

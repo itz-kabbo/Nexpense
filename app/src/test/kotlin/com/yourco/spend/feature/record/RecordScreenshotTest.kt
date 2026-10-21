@@ -72,7 +72,7 @@ class RecordScreenshotTest {
             ),
         )
         return RecordUiState(
-            todayDateLabel = "Thursday, Oct 15",
+            todayDateLabel = "Thursday, Oct 15, 2026",
             totalMinor = 6350L,
             formattedTotal = "$63.50",
             currencySymbol = "$",

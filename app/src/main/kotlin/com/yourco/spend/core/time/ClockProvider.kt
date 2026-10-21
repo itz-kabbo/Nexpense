@@ -17,11 +17,11 @@ import javax.inject.Singleton
 object ClockModule {
     @Provides
     @Singleton
-    fun provideClock(): Clock = Clock.systemDefaultZone()
+    fun provideClock(): Clock = CurrentDeviceClock
 
     @Provides
     @Singleton
-    fun provideZoneId(clock: Clock): ZoneId = clock.zone
+    fun provideZoneId(): ZoneId = ZoneId.systemDefault()
 
     @Provides
     @Singleton
@@ -29,6 +29,15 @@ object ClockModule {
         @ApplicationContext context: Context,
         clock: Clock,
     ): TodayObserver = DefaultTodayObserver(context, clock)
+}
+
+/** Resolves the device zone each time it is read, so time-zone changes affect new dates immediately. */
+private object CurrentDeviceClock : Clock() {
+    override fun getZone(): ZoneId = ZoneId.systemDefault()
+
+    override fun withZone(zone: ZoneId): Clock = Clock.system(zone)
+
+    override fun instant(): Instant = Instant.now()
 }
 
 /**

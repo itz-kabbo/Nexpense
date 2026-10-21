@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
@@ -36,27 +37,32 @@ interface SettingsRepository {
     suspend fun setLanguageTag(tag: String)
     suspend fun setCurrencyCode(code: String)
     suspend fun setFirstRunDone(done: Boolean)
+    suspend fun clearAllSettings() = Unit
 }
 
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
+    private val themeRepository: ThemeRepository,
 ) : SettingsRepository {
 
+    constructor(dataStore: DataStore<Preferences>) : this(
+        dataStore = dataStore,
+        themeRepository = object : ThemeRepository {
+            private val _theme = MutableStateFlow(ThemeMode.SYSTEM)
+            override val themeMode: Flow<ThemeMode> = _theme
+            override fun getThemeModeSync(): ThemeMode = _theme.value
+            override suspend fun setThemeMode(mode: ThemeMode) { _theme.value = mode }
+        },
+    )
+
     private object PreferencesKeys {
-        val THEME_MODE = stringPreferencesKey("theme_mode")
         val LANGUAGE_TAG = stringPreferencesKey("language_tag")
         val CURRENCY_CODE = stringPreferencesKey("currency_code")
         val FIRST_RUN_DONE = booleanPreferencesKey("first_run_done")
     }
 
-    override val themeMode: Flow<ThemeMode> = dataStore.data
-        .catch { exception ->
-            if (exception is IOException) emit(emptyPreferences()) else throw exception
-        }
-        .map { preferences ->
-            ThemeMode.fromString(preferences[PreferencesKeys.THEME_MODE])
-        }
+    override val themeMode: Flow<ThemeMode> = themeRepository.themeMode
 
     override val languageTag: Flow<String> = dataStore.data
         .catch { exception ->
@@ -84,9 +90,7 @@ class SettingsRepositoryImpl @Inject constructor(
         }
 
     override suspend fun setThemeMode(mode: ThemeMode) {
-        dataStore.edit { preferences ->
-            preferences[PreferencesKeys.THEME_MODE] = mode.name
-        }
+        themeRepository.setThemeMode(mode)
     }
 
     override suspend fun setLanguageTag(tag: String) {
@@ -105,6 +109,11 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.FIRST_RUN_DONE] = done
         }
+    }
+
+    override suspend fun clearAllSettings() {
+        dataStore.edit { preferences -> preferences.clear() }
+        themeRepository.setThemeMode(ThemeMode.SYSTEM)
     }
 
     companion object {

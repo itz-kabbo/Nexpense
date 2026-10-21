@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -21,12 +22,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -46,17 +51,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,13 +73,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yourco.spend.R
 import com.yourco.spend.core.designsystem.AppTheme
 import com.yourco.spend.core.designsystem.components.SegmentedControl
+import com.yourco.spend.core.language.LanguageCatalog
+import com.yourco.spend.core.money.CurrencyCatalog
 import com.yourco.spend.data.repo.ThemeMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
-
-private val SUPPORTED_CURRENCIES = listOf("USD", "TWD", "EUR", "JPY", "GBP", "CNY", "CAD", "AUD", "HKD", "SGD", "KRW")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,6 +98,14 @@ fun SettingsScreen(
     val exportSuccessMsg = stringResource(R.string.settings_export_success)
     val exportFailedMsg = stringResource(R.string.settings_export_failed)
     val importFailedMsg = stringResource(R.string.settings_import_failed)
+    val wipeSucceededMsg = stringResource(R.string.settings_wipe_success)
+    val wipeFailedMsg = stringResource(R.string.settings_wipe_failed)
+
+    LaunchedEffect(viewModel, snackbarHostState) {
+        viewModel.wipeResultEvents.collect { succeeded ->
+            snackbarHostState.showSnackbar(if (succeeded) wipeSucceededMsg else wipeFailedMsg)
+        }
+    }
 
     // File pickers
     val exportJsonLauncher = rememberLauncherForActivityResult(
@@ -113,8 +130,8 @@ fun SettingsScreen(
                     } else {
                         snackbarHostState.showSnackbar(exportFailedMsg)
                     }
-                } catch (e: Exception) {
-                    snackbarHostState.showSnackbar(e.message ?: exportFailedMsg)
+                } catch (_: Exception) {
+                    snackbarHostState.showSnackbar(exportFailedMsg)
                 }
             }
         }
@@ -142,8 +159,8 @@ fun SettingsScreen(
                     } else {
                         snackbarHostState.showSnackbar(exportFailedMsg)
                     }
-                } catch (e: Exception) {
-                    snackbarHostState.showSnackbar(e.message ?: exportFailedMsg)
+                } catch (_: Exception) {
+                    snackbarHostState.showSnackbar(exportFailedMsg)
                 }
             }
         }
@@ -169,10 +186,10 @@ fun SettingsScreen(
                             )
                         )
                     } else {
-                        snackbarHostState.showSnackbar(result?.error ?: importFailedMsg)
+                        snackbarHostState.showSnackbar(importFailedMsg)
                     }
-                } catch (e: Exception) {
-                    snackbarHostState.showSnackbar(e.message ?: importFailedMsg)
+                } catch (_: Exception) {
+                    snackbarHostState.showSnackbar(importFailedMsg)
                 }
             }
         }
@@ -182,7 +199,10 @@ fun SettingsScreen(
     var categoryToRename by remember { mutableStateOf<CategoryUiItem?>(null) }
     var renameText by remember { mutableStateOf("") }
     var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var showWipeConfirmation by remember { mutableStateOf(false) }
     var newCategoryText by remember { mutableStateOf("") }
+    var showCurrencyPicker by rememberSaveable { mutableStateOf(false) }
+    var showLanguagePicker by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -193,17 +213,35 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(horizontal = AppTheme.spacing.m, vertical = AppTheme.spacing.s),
+                    .padding(horizontal = AppTheme.spacing.screenHorizontal, vertical = AppTheme.spacing.m),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(R.string.cd_back),
-                        tint = AppTheme.colors.textPrimary,
-                    )
+                Box(
+                    modifier = Modifier.size(48.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(AppTheme.colors.surfaceVariant)
+                            .border(
+                                width = 0.5.dp,
+                                color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                                shape = CircleShape,
+                            )
+                            .clickable(onClick = onNavigateBack),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back),
+                            tint = AppTheme.colors.textPrimary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(AppTheme.spacing.s))
+                Spacer(modifier = Modifier.width(AppTheme.spacing.m))
                 Text(
                     text = stringResource(R.string.settings_title),
                     style = AppTheme.typography.title.copy(color = AppTheme.colors.textPrimary),
@@ -219,94 +257,208 @@ fun SettingsScreen(
                 .padding(horizontal = AppTheme.spacing.screenHorizontal)
                 .navigationBarsPadding(),
         ) {
-            // 1. Appearance Section
-            SettingsSectionHeader(title = stringResource(R.string.settings_section_appearance))
-            val sysTheme = stringResource(R.string.theme_system)
-            val lightTheme = stringResource(R.string.theme_light)
-            val darkTheme = stringResource(R.string.theme_dark)
-            val appearanceOptions = remember(sysTheme, lightTheme, darkTheme) {
-                listOf(sysTheme, lightTheme, darkTheme)
-            }
-            val selectedThemeIndex = when (state.themeMode) {
-                ThemeMode.SYSTEM -> 0
-                ThemeMode.LIGHT -> 1
-                ThemeMode.DARK -> 2
-            }
-            SegmentedControl(
-                items = appearanceOptions,
-                selectedIndex = selectedThemeIndex,
-                onSelectedIndexChange = { index ->
-                    when (index) {
-                        0 -> viewModel.setThemeMode(ThemeMode.SYSTEM)
-                        1 -> viewModel.setThemeMode(ThemeMode.LIGHT)
-                        2 -> viewModel.setThemeMode(ThemeMode.DARK)
-                    }
-                },
-            )
-
-            Spacer(modifier = Modifier.height(AppTheme.spacing.xl))
-
-            // 2. Language Section
-            SettingsSectionHeader(title = stringResource(R.string.settings_section_language))
-            val sysLang = stringResource(R.string.language_system)
-            val enLang = stringResource(R.string.language_en)
-            val zhTwLang = stringResource(R.string.language_zh_tw)
-            val languageOptions = remember(sysLang, enLang, zhTwLang) {
-                listOf(sysLang, enLang, zhTwLang)
-            }
-            val selectedLangIndex = when (state.languageTag) {
-                "en" -> 1
-                "zh-TW" -> 2
-                else -> 0
-            }
-            SegmentedControl(
-                items = languageOptions,
-                selectedIndex = selectedLangIndex,
-                onSelectedIndexChange = { index ->
-                    when (index) {
-                        0 -> viewModel.setLanguageTag("")
-                        1 -> viewModel.setLanguageTag("en")
-                        2 -> viewModel.setLanguageTag("zh-TW")
-                    }
-                },
-            )
-
-            Spacer(modifier = Modifier.height(AppTheme.spacing.xl))
-
-            // 3. Currency Section
-            SettingsSectionHeader(title = stringResource(R.string.settings_section_currency))
-            Row(
+            // 1. Appearance & Preferences Section
+            SettingsSectionHeader(title = stringResource(R.string.settings_section_preferences))
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.s),
+                    .clip(AppTheme.shapes.card)
+                    .background(AppTheme.colors.surface)
+                    .border(
+                        width = 0.5.dp,
+                        color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                        shape = AppTheme.shapes.card,
+                    )
+                    .padding(AppTheme.spacing.m),
             ) {
-                SUPPORTED_CURRENCIES.forEach { code ->
-                    val isSelected = code == state.currencyCode
-                    val bgColor = if (isSelected) AppTheme.colors.textPrimary else AppTheme.colors.surface
-                    val textColor = if (isSelected) AppTheme.colors.background else AppTheme.colors.textPrimary
-                    Box(
-                        modifier = Modifier
-                            .clip(AppTheme.shapes.pill)
-                            .background(bgColor)
-                            .clickable { viewModel.setCurrencyCode(code) }
-                            .padding(horizontal = AppTheme.spacing.m, vertical = AppTheme.spacing.s),
-                        contentAlignment = Alignment.Center,
+                // Theme Mode
+                Text(
+                    text = stringResource(R.string.settings_theme),
+                    style = AppTheme.typography.label.copy(color = AppTheme.colors.textSecondary),
+                    modifier = Modifier.padding(bottom = AppTheme.spacing.s),
+                )
+                val sysTheme = stringResource(R.string.theme_system)
+                val lightTheme = stringResource(R.string.theme_light)
+                val darkTheme = stringResource(R.string.theme_dark)
+                val appearanceOptions = remember(sysTheme, lightTheme, darkTheme) {
+                    listOf(sysTheme, lightTheme, darkTheme)
+                }
+                val selectedThemeIndex = when (state.themeMode) {
+                    ThemeMode.SYSTEM -> 0
+                    ThemeMode.LIGHT -> 1
+                    ThemeMode.DARK -> 2
+                }
+                SegmentedControl(
+                    items = appearanceOptions,
+                    selectedIndex = selectedThemeIndex,
+                    onSelectedIndexChange = { index ->
+                        when (index) {
+                            0 -> viewModel.setThemeMode(ThemeMode.SYSTEM)
+                            1 -> viewModel.setThemeMode(ThemeMode.LIGHT)
+                            2 -> viewModel.setThemeMode(ThemeMode.DARK)
+                        }
+                    },
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = AppTheme.spacing.m),
+                    thickness = 0.5.dp,
+                    color = AppTheme.colors.hairline,
+                )
+
+                // Language
+                Text(
+                    text = stringResource(R.string.settings_section_language),
+                    style = AppTheme.typography.label.copy(color = AppTheme.colors.textSecondary),
+                    modifier = Modifier.padding(bottom = AppTheme.spacing.s),
+                )
+
+                val currentLanguageItem = remember(state.languageTag) {
+                    LanguageCatalog.findLanguage(state.languageTag)
+                }
+                val languageDisplay = currentLanguageItem?.displayLabel() ?: stringResource(R.string.language_system)
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(AppTheme.shapes.pill)
+                        .background(AppTheme.colors.surfaceVariant)
+                        .border(width = 0.5.dp, color = AppTheme.colors.hairline, shape = AppTheme.shapes.pill)
+                        .clickable(
+                            role = Role.Button,
+                            onClick = { showLanguagePicker = true },
+                            onClickLabel = stringResource(R.string.settings_change_language),
+                        )
+                        .padding(horizontal = AppTheme.spacing.m, vertical = AppTheme.spacing.s),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f),
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(AppTheme.shapes.pill)
+                                .background(AppTheme.colors.surface)
+                                .border(
+                                    width = 0.5.dp,
+                                    color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                                    shape = AppTheme.shapes.pill,
+                                )
+                                .padding(horizontal = AppTheme.spacing.s, vertical = 4.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = if (state.languageTag.isEmpty()) "SYS" else state.languageTag.uppercase(),
+                                style = AppTheme.typography.label.copy(
+                                    color = AppTheme.colors.textPrimary,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.sp,
+                                ),
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(AppTheme.spacing.s))
                         Text(
-                            text = code,
-                            style = AppTheme.typography.label.copy(
-                                color = textColor,
-                                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                            text = languageDisplay,
+                            style = AppTheme.typography.body.copy(
+                                color = AppTheme.colors.textPrimary,
+                                fontWeight = FontWeight.Medium,
                             ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
+
+                    Icon(
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = AppTheme.colors.textSecondary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = AppTheme.spacing.m),
+                    thickness = 0.5.dp,
+                    color = AppTheme.colors.hairline,
+                )
+
+                // Currency
+                Text(
+                    text = stringResource(R.string.settings_section_currency),
+                    style = AppTheme.typography.label.copy(color = AppTheme.colors.textSecondary),
+                    modifier = Modifier.padding(bottom = AppTheme.spacing.s),
+                )
+
+                val currentCurrencyItem = remember(state.currencyCode) {
+                    CurrencyCatalog.findCurrency(state.currencyCode)
+                }
+                val currencyDisplay = currentCurrencyItem?.displayLabel() ?: state.currencyCode
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(AppTheme.shapes.pill)
+                        .background(AppTheme.colors.surfaceVariant)
+                        .border(width = 0.5.dp, color = AppTheme.colors.hairline, shape = AppTheme.shapes.pill)
+                        .clickable(
+                            role = Role.Button,
+                            onClick = { showCurrencyPicker = true },
+                            onClickLabel = stringResource(R.string.settings_change_currency),
+                        )
+                        .padding(horizontal = AppTheme.spacing.m, vertical = AppTheme.spacing.s),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(AppTheme.shapes.pill)
+                                .background(AppTheme.colors.surface)
+                                .border(
+                                    width = 0.5.dp,
+                                    color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                                    shape = AppTheme.shapes.pill,
+                                )
+                                .padding(horizontal = AppTheme.spacing.s, vertical = 4.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = currentCurrencyItem?.symbol ?: "$",
+                                style = AppTheme.typography.label.copy(
+                                    color = AppTheme.colors.textPrimary,
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(AppTheme.spacing.s))
+                        Text(
+                            text = currencyDisplay,
+                            style = AppTheme.typography.body.copy(
+                                color = AppTheme.colors.textPrimary,
+                                fontWeight = FontWeight.Medium,
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+
+                    Icon(
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = AppTheme.colors.textSecondary,
+                        modifier = Modifier.size(18.dp),
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(AppTheme.spacing.xl))
 
-            // 4. Categories Section
+            // 2. Categories Section
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -338,6 +490,11 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .clip(AppTheme.shapes.card)
                     .background(AppTheme.colors.surface)
+                    .border(
+                        width = 0.5.dp,
+                        color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                        shape = AppTheme.shapes.card,
+                    )
                     .padding(vertical = AppTheme.spacing.xs),
             ) {
                 state.categories.forEachIndexed { index, category ->
@@ -373,6 +530,28 @@ fun SettingsScreen(
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { viewModel.moveCategory(category.id, -1) },
+                                enabled = index > 0,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.KeyboardArrowUp,
+                                    contentDescription = stringResource(R.string.settings_move_category_up),
+                                    tint = AppTheme.colors.textSecondary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.moveCategory(category.id, 1) },
+                                enabled = index < state.categories.lastIndex,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                                    contentDescription = stringResource(R.string.settings_move_category_down),
+                                    tint = AppTheme.colors.textSecondary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
                             IconButton(
                                 onClick = {
                                     categoryToRename = category
@@ -410,20 +589,25 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(AppTheme.spacing.xl))
 
-            // 5. Data & Backup Section
+            // 3. Data & Backup Section
             SettingsSectionHeader(title = stringResource(R.string.settings_section_data))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(AppTheme.shapes.card)
                     .background(AppTheme.colors.surface)
+                    .border(
+                        width = 0.5.dp,
+                        color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                        shape = AppTheme.shapes.card,
+                    )
                     .padding(AppTheme.spacing.m),
                 verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.s),
             ) {
                 OutlinedButton(
                     onClick = {
                         val today = LocalDate.now().toString()
-                        exportJsonLauncher.launch("mote_backup_$today.json")
+                        exportJsonLauncher.launch("nexpense_backup_$today.json")
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppTheme.shapes.pill,
@@ -437,7 +621,7 @@ fun SettingsScreen(
                 OutlinedButton(
                     onClick = {
                         val today = LocalDate.now().toString()
-                        exportCsvLauncher.launch("mote_expenses_$today.csv")
+                        exportCsvLauncher.launch("nexpense_expenses_$today.csv")
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppTheme.shapes.pill,
@@ -466,16 +650,34 @@ fun SettingsScreen(
                         style = AppTheme.typography.body.copy(fontWeight = FontWeight.Medium),
                     )
                 }
+
+                OutlinedButton(
+                    onClick = { showWipeConfirmation = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = AppTheme.shapes.pill,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_wipe_data),
+                        style = AppTheme.typography.body.copy(color = AppTheme.colors.textPrimary),
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(AppTheme.spacing.xl))
 
-            // 6. About & Privacy Section
+            // 4. About & Privacy Section
             SettingsSectionHeader(title = stringResource(R.string.settings_section_about))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = AppTheme.spacing.s),
+                    .clip(AppTheme.shapes.card)
+                    .background(AppTheme.colors.surface)
+                    .border(
+                        width = 0.5.dp,
+                        color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                        shape = AppTheme.shapes.card,
+                    )
+                    .padding(AppTheme.spacing.m),
             ) {
                 Text(
                     text = stringResource(R.string.settings_version, state.appVersion),
@@ -572,6 +774,50 @@ fun SettingsScreen(
                 }
             },
             containerColor = AppTheme.colors.surface,
+        )
+    }
+
+    if (showWipeConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showWipeConfirmation = false },
+            title = { Text(stringResource(R.string.settings_wipe_title), style = AppTheme.typography.title) },
+            text = { Text(stringResource(R.string.settings_wipe_message), style = AppTheme.typography.body) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showWipeConfirmation = false
+                    viewModel.wipeAllData()
+                }) {
+                    Text(stringResource(R.string.settings_wipe_confirm), color = AppTheme.colors.textPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWipeConfirmation = false }) {
+                    Text(stringResource(R.string.cancel), color = AppTheme.colors.textSecondary)
+                }
+            },
+            containerColor = AppTheme.colors.surface,
+        )
+    }
+
+    if (showCurrencyPicker) {
+        CurrencyPickerBottomSheet(
+            selectedCurrencyCode = state.currencyCode,
+            onCurrencySelected = { code ->
+                viewModel.setCurrencyCode(code)
+                showCurrencyPicker = false
+            },
+            onDismissRequest = { showCurrencyPicker = false },
+        )
+    }
+
+    if (showLanguagePicker) {
+        LanguagePickerBottomSheet(
+            selectedLanguageTag = state.languageTag,
+            onLanguageSelected = { tag ->
+                viewModel.setLanguageTag(tag)
+                showLanguagePicker = false
+            },
+            onDismissRequest = { showLanguagePicker = false },
         )
     }
 }

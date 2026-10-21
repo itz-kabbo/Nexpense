@@ -1,16 +1,16 @@
 # Google Play Data Safety Declaration
 
-This document details the exact responses and justifications for the Google Play Data Safety form for **Mote**.
+This document details the exact responses and justifications for the Google Play Data Safety form for **Nexpense**.
 
 ---
 
 ## 1. Executive Summary
 
-- **Data Collected:** **No** (0 data collected).
-- **Data Shared:** **No** (0 data shared).
+- **App-controlled collection:** **No** (the app does not transmit user data to Nexpense servers or through app networking).
+- **System backup:** Android Auto Backup is enabled and may transfer local app data when device backup is enabled. Confirm how this OS-managed transfer should be represented in the Play Console form before publication.
 - **Network Permissions:** **None** (`android.permission.INTERNET` is absent from the manifest and enforced by CI/build checks).
 - **Third-Party SDKs:** **None** (No analytics, no ad networks, no crash reporting, no tracking SDKs).
-- **Storage Model:** 100% local on-device SQLite database via Jetpack Room.
+- **App Storage Model:** Local SQLite database via Jetpack Room; Android Auto Backup may copy the database and preferences off-device when enabled.
 
 ---
 
@@ -19,16 +19,16 @@ This document details the exact responses and justifications for the Google Play
 ### Data Collection and Security
 | Question | Answer | Details / Justification |
 | :--- | :--- | :--- |
-| **Does your app collect or share any of the required user data types?** | **No** | The app operates entirely on the device. It has no network capabilities and transmits no data to external servers. |
-| **Is all user data collected by your app encrypted in transit?** | **Not applicable** | No data is collected or transmitted over any network. |
-| **Do you provide a way for users to request that their data be deleted?** | **Yes** | Users can delete individual items, clear historical periods, or tap **Wipe all data** in Settings to instantly purge the local database and preferences. Uninstalling the app also deletes all local application storage. |
+| **Does your app collect or share any of the required user data types?** | **Needs publisher review** | The app has no network permission and does not transmit data to Nexpense servers. Android Auto Backup is enabled and may transfer the local database and preferences when system backup is enabled; confirm the Play Console classification for that OS-managed transfer. |
+| **Is all user data collected by your app encrypted in transit?** | **Needs publisher review** | The app itself does not transmit data. Android system backup is separately managed and its encryption depends on Android version, screen-lock configuration, and device settings. |
+| **Do you provide a way for users to request that their data be deleted?** | **Yes** | Users can remove individual expenses from active history, or tap **Wipe all data** in Settings to delete expenses, custom categories, learned category corrections, and reset saved preferences. The full wipe clears deletion markers too. Uninstalling the app removes the app's local sandbox; Android system backups are managed separately by Android. |
 
 ### Data Types Assessment
 | Category | Data Type | Collected? | Shared? | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
 | **Location** | Approximate or Precise Location | No | No | Not accessed. |
 | **Personal Info** | Name, Email, Address, Phone, IDs | No | No | Not collected or requested. |
-| **Financial Info** | User payment info, Purchase history, Credit score | No | No | Expense notes and amounts entered by the user are stored strictly in local SQLite and never transmitted. |
+| **Financial Info** | Expense records / purchase history | Needs publisher review | Needs publisher review | Expense notes and amounts are stored in local SQLite. Android system backup may include the database when enabled; confirm the Play Console classification before publication. |
 | **Health and Fitness** | Health / Fitness info | No | No | Not accessed. |
 | **Messages** | Emails, SMS, in-app messages | No | No | Not accessed. |
 | **Photos and Videos** | Photos, Videos | No | No | Optional receipt image sharing is handled via standard Android platform share intent (`ACTION_SEND`) without app network access. |
@@ -47,12 +47,13 @@ This document details the exact responses and justifications for the Google Play
 
 ### Local SQLite Database
 - All transaction records, expense entries, custom categories, and learned parser heuristics are stored locally in the app's private sandbox directory via Android Jetpack Room (`AppDatabase`).
-- Sandboxed files are inaccessible to other applications without root privileges.
+- Sandboxed files are inaccessible to other applications without root privileges. Individually deleted expense rows remain locally as timestamped tombstones and in JSON backups for conflict protection; the full wipe removes those rows.
 
-### Encrypted Android Auto Backup
+### Android Auto Backup
 - Backup rules (`backup_rules.xml` and `data_extraction_rules.xml`) allow standard Android cloud backup of the SQLite database and DataStore preferences.
-- When enabled by the user in Android system settings, backups are encrypted using Android's end-to-end encrypted backup infrastructure via the user's Google account and lockscreen credentials.
+- When enabled by the user in Android system settings, Android handles backup storage. Android documents client-side, end-to-end encryption for cloud backups on Android 9 or later when a screen lock is set; backup behavior depends on device version and settings.
 - No proprietary cloud services or external sync pipelines are used.
+- The app itself does not upload data. Review the enabled Android backup behavior when completing the store's data disclosures; system backup is managed separately from Nexpense's app networking.
 
 ---
 

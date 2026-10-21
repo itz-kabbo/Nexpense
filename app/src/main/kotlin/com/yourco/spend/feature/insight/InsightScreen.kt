@@ -1,6 +1,8 @@
 package com.yourco.spend.feature.insight
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +16,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -26,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -116,6 +121,7 @@ fun InsightScreenContent(
             BigAmount(
                 amount = state.amountDigits,
                 currencySymbol = state.currencySymbol,
+                currencyCode = state.currencyCode,
             )
         }
 
@@ -127,38 +133,74 @@ fun InsightScreenContent(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(
-                onClick = onPreviousPeriod,
+            Box(
                 modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.ChevronLeft,
-                    contentDescription = stringResource(R.string.cd_previous_period),
-                    tint = AppTheme.colors.textPrimary,
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(AppTheme.colors.surfaceVariant)
+                        .border(
+                            width = 0.5.dp,
+                            color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                            shape = CircleShape,
+                        )
+                        .clickable(onClick = onPreviousPeriod),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ChevronLeft,
+                        contentDescription = stringResource(R.string.cd_previous_period),
+                        tint = AppTheme.colors.textPrimary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
 
             Text(
                 text = displayPeriodLabel,
                 style = AppTheme.typography.bodySecondary.copy(color = AppTheme.colors.textSecondary),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = AppTheme.spacing.s),
+                modifier = Modifier.padding(horizontal = AppTheme.spacing.m),
             )
 
-            IconButton(
-                onClick = onNextPeriod,
-                enabled = state.canGoForward,
+            Box(
                 modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.ChevronRight,
-                    contentDescription = stringResource(R.string.cd_next_period),
-                    tint = if (state.canGoForward) {
-                        AppTheme.colors.textPrimary
-                    } else {
-                        AppTheme.colors.textSecondary.copy(alpha = 0.3f)
-                    },
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(AppTheme.colors.surfaceVariant.copy(alpha = if (state.canGoForward) 1f else 0.6f))
+                        .border(
+                            width = 0.5.dp,
+                            color = if (AppTheme.colors.isDark) {
+                                AppTheme.colors.rimHighlight.copy(alpha = if (state.canGoForward) 1f else 0.6f)
+                            } else {
+                                AppTheme.colors.hairline.copy(alpha = if (state.canGoForward) 1f else 0.6f)
+                            },
+                            shape = CircleShape,
+                        )
+                        .clickable(
+                            enabled = state.canGoForward,
+                            onClick = onNextPeriod,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = stringResource(R.string.cd_next_period),
+                        tint = if (state.canGoForward) {
+                            AppTheme.colors.textPrimary
+                        } else {
+                            AppTheme.colors.textSecondary.copy(alpha = 0.45f)
+                        },
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
         }
 
@@ -184,11 +226,19 @@ fun InsightScreenContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = AppTheme.spacing.xxl),
+                    .padding(horizontal = AppTheme.spacing.screenHorizontal, vertical = AppTheme.spacing.l)
+                    .clip(AppTheme.shapes.card)
+                    .background(AppTheme.colors.surface)
+                    .border(
+                        width = 0.5.dp,
+                        color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                        shape = AppTheme.shapes.card,
+                    )
+                    .padding(vertical = AppTheme.spacing.xxl, horizontal = AppTheme.spacing.l),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = stringResource(R.string.insight_empty),
+                    text = stringResource(R.string.insight_empty_period),
                     style = AppTheme.typography.bodySecondary.copy(
                         color = AppTheme.colors.textSecondary,
                     ),
@@ -196,12 +246,30 @@ fun InsightScreenContent(
                 )
             }
         } else {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                state.categories.forEach { category ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AppTheme.spacing.screenHorizontal)
+                    .clip(AppTheme.shapes.card)
+                    .background(AppTheme.colors.surface)
+                    .border(
+                        width = 0.5.dp,
+                        color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                        shape = AppTheme.shapes.card,
+                    ),
+            ) {
+                state.categories.forEachIndexed { index, category ->
                     val displayName = if (category.nameRes != null) {
                         stringResource(category.nameRes)
                     } else {
                         category.name
+                    }
+                    if (index > 0) {
+                        HorizontalDivider(
+                            color = AppTheme.colors.hairline,
+                            thickness = 0.5.dp,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
                     }
                     CategoryBar(
                         name = displayName,

@@ -265,9 +265,15 @@ class SettingsViewModelTest {
         expenseDao = object : com.yourco.spend.data.db.dao.ExpenseDao {
             override suspend fun upsert(e: ExpenseEntity) {}
             override suspend fun upsertAll(entities: List<ExpenseEntity>) {}
+            override suspend fun upsertCategories(categories: List<CategoryEntity>) {}
+            override suspend fun deleteAllExpenses() {}
+            override suspend fun deleteCustomCategories() {}
+            override suspend fun deleteLearnedMappings() {}
             override suspend fun softDelete(id: String, now: Long) {}
-            override suspend fun restore(id: String) {}
+            override suspend fun restore(id: String, now: Long) {}
             override fun observeDay(date: String): Flow<List<ExpenseEntity>> = flowOf(emptyList())
+            override fun observeDailyCurrencyTotals(date: String): Flow<List<com.yourco.spend.data.db.dao.CurrencyTotal>> = flowOf(emptyList())
+            override fun observeDayWithCategoryNames(date: String): Flow<List<com.yourco.spend.data.db.dao.ExpenseWithCategoryName>> = flowOf(emptyList())
             override fun observeTotal(from: String, to: String, currency: String): Flow<Long> = flowOf(0L)
             override fun observeByCategory(from: String, to: String, currency: String): Flow<List<com.yourco.spend.data.db.dao.CategoryTotal>> = flowOf(emptyList())
             override fun observeBuckets(from: String, to: String, len: Int, currency: String): Flow<List<com.yourco.spend.data.db.dao.BucketTotal>> = flowOf(emptyList())

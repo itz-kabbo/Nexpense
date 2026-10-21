@@ -63,21 +63,27 @@ class ReceiptViewModel @Inject constructor(
     }.flatMapLatest { (date, currencyCode, todayDate) ->
         val dateIso = date.toString()
         combine(
-            expenseRepository.observeDay(dateIso),
+            expenseRepository.observeDayWithCategoryNames(dateIso),
             expenseRepository.observeTotal(dateIso, dateIso, currency = currencyCode),
-        ) { expenses, totalFromDb ->
+            expenseRepository.observeDailyCurrencyTotals(dateIso),
+        ) { expenses, totalFromDb, currencyTotals ->
             val locale = Locale.getDefault()
             // VERIFY: Receipt items ordering chronological (oldest first like printed shopping slip)
-            val items = expenses.reversed().map { expense ->
+            val items = expenses.reversed().map { joinedExpense ->
+                val expense = joinedExpense.expense
                 val categoryDefaultRes = CategoryEntity.defaultNameRes(expense.categoryId)
                 val noteRes = if (expense.note.isBlank()) {
-                    categoryDefaultRes ?: R.string.category_other
+                    if (joinedExpense.categoryNameOverride.isNullOrBlank()) {
+                        categoryDefaultRes ?: R.string.category_other
+                    } else {
+                        null
+                    }
                 } else {
                     null
                 }
                 ReceiptItemUiModel(
                     id = expense.id,
-                    note = expense.note,
+                    note = expense.note.ifBlank { joinedExpense.categoryNameOverride.orEmpty() },
                     noteRes = noteRes,
                     categoryId = expense.categoryId,
                     amountMinor = expense.amountMinor,
@@ -93,6 +99,12 @@ class ReceiptViewModel @Inject constructor(
                 totalMinor = totalFromDb,
                 formattedTotal = formatMinor(totalFromDb, currencyCode, locale),
                 currencyCode = currencyCode,
+                currencyTotals = currencyTotals.map { total ->
+                    ReceiptCurrencyTotalUiModel(
+                        currencyCode = total.currencyCode,
+                        formattedTotal = formatMinor(total.totalMinor, total.currencyCode, locale),
+                    )
+                },
                 isEmpty = items.isEmpty(),
                 canGoForward = currentDateIsBeforeToday,
             )

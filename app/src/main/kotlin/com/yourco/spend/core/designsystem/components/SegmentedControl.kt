@@ -5,6 +5,8 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -36,19 +38,22 @@ fun SegmentedControl(
 ) {
     val view = LocalView.current
 
+    val thumbColor = if (AppTheme.colors.isDark) Color(0xFF2A2A32) else AppTheme.colors.surface
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(AppTheme.shapes.pill)
-            .background(AppTheme.colors.surface)
+            .background(AppTheme.colors.surfaceVariant)
+            .border(width = 0.5.dp, color = AppTheme.colors.hairline, shape = AppTheme.shapes.pill)
             .selectableGroup()
-            .padding(2.dp),
+            .padding(3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         items.forEachIndexed { index, title ->
             val isSelected = index == selectedIndex
             val backgroundColor by animateColorAsState(
-                targetValue = if (isSelected) AppTheme.colors.background else AppTheme.colors.surface,
+                targetValue = if (isSelected) thumbColor else Color.Transparent,
                 animationSpec = tween(durationMillis = AppTheme.motion.FADE_DURATION_MS),
                 label = "SegmentBackground",
             )
@@ -58,12 +63,23 @@ fun SegmentedControl(
                 label = "SegmentTextColor",
             )
 
+            val borderModifier = if (isSelected) {
+                Modifier.border(
+                    width = 0.5.dp,
+                    color = if (AppTheme.colors.isDark) AppTheme.colors.rimHighlight else AppTheme.colors.hairline,
+                    shape = AppTheme.shapes.pill,
+                )
+            } else {
+                Modifier
+            }
+
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .defaultMinSize(minHeight = 48.dp)
+                    .defaultMinSize(minHeight = 44.dp)
                     .clip(AppTheme.shapes.pill)
                     .background(backgroundColor)
+                    .then(borderModifier)
                     .selectable(
                         selected = isSelected,
                         role = Role.Tab,

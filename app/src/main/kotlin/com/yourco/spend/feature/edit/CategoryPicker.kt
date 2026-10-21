@@ -64,7 +64,7 @@ fun CategoryPickerDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
-                categories.forEach { category ->
+                categories.filter { !it.isHidden || it.id == selectedCategoryId }.forEach { category ->
                     val displayName = category.nameOverride
                         ?: category.defaultNameRes()?.let { stringResource(it) }
                         ?: category.id

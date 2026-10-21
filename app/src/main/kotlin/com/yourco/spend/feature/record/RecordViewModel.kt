@@ -15,9 +15,11 @@ import com.yourco.spend.data.repo.LearnedMappingRepository
 import com.yourco.spend.data.repo.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -45,9 +47,9 @@ class RecordViewModel @Inject constructor(
         const val KEY_EDITING_EXPENSE_ID = "editing_expense_id"
     }
 
-    // VERIFY: Today date format pattern (defaults to "EEEE, MMM d" in user's locale)
+    // VERIFY: Today date format pattern (defaults to "EEEE, MMM d, yyyy" in user's locale)
     private fun formatTodayDate(date: LocalDate, locale: Locale = Locale.getDefault()): String {
-        val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", locale)
+        val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy", locale)
         return date.format(formatter)
     }
 
@@ -60,8 +62,17 @@ class RecordViewModel @Inject constructor(
         combine(
             expenseRepository.observeDay(todayIso),
             expenseRepository.observeTotal(todayIso, todayIso, currency = currencyCode),
-        ) { expenses, totalMinor ->
+            expenseRepository.observeDailyCurrencyTotals(todayIso),
+        ) { expenses, totalMinor, currencyTotals ->
             val locale = Locale.getDefault()
+            val otherCurrencies = currencyTotals.filter { it.currencyCode != currencyCode }
+            val otherCurrencyTotals = if (otherCurrencies.isEmpty()) {
+                null
+            } else {
+                otherCurrencies.joinToString(" · ") { total ->
+                    "${total.currencyCode} ${formatMinor(total.totalMinor, total.currencyCode, locale)}"
+                }
+            }
             RecordUiState(
                 todayDateLabel = formatTodayDate(today, locale),
                 totalMinor = totalMinor,
@@ -70,6 +81,7 @@ class RecordViewModel @Inject constructor(
                 amountString = formatAmountDigits(totalMinor, currencyCode, locale),
                 expenses = expenses,
                 currencyCode = currencyCode,
+                otherCurrencyTotals = otherCurrencyTotals,
             )
         }
     }.stateIn(
@@ -91,8 +103,20 @@ class RecordViewModel @Inject constructor(
             initialValue = emptyList(),
         )
 
+    val allCategories: StateFlow<List<CategoryEntity>> = categoryRepository.observeAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList(),
+        )
+
     private val _editingExpense = MutableStateFlow<ExpenseEntity?>(null)
     val editingExpense: StateFlow<ExpenseEntity?> = _editingExpense.asStateFlow()
+
+    private val _updateResultEvents = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val updateResultEvents = _updateResultEvents.asSharedFlow()
+
+    private var isUpdatingExpense = false
 
     init {
         viewModelScope.launch {
@@ -122,16 +146,25 @@ class RecordViewModel @Inject constructor(
     }
 
     fun updateExpense(updated: ExpenseEntity) {
+        if (isUpdatingExpense) return
         val original = _editingExpense.value
         val now = clock.millis()
+        isUpdatingExpense = true
         viewModelScope.launch {
-            expenseRepository.update(updated.copy(updatedAt = now))
-            if (updated.note.isNotBlank() && (original == null || original.categoryId != updated.categoryId)) {
-                learnedMappingRepository.recordMapping(updated.note.lowercase(), updated.categoryId)
+            try {
+                expenseRepository.update(updated.copy(updatedAt = now))
+                if (updated.note.isNotBlank() && (original == null || original.categoryId != updated.categoryId)) {
+                    runCatching { learnedMappingRepository.recordMapping(updated.note.lowercase(), updated.categoryId) }
+                }
+                _editingExpense.value = null
+                savedStateHandle.remove<String>(KEY_EDITING_EXPENSE_ID)
+                _updateResultEvents.tryEmit(true)
+            } catch (_: Exception) {
+                _updateResultEvents.tryEmit(false)
+            } finally {
+                isUpdatingExpense = false
             }
         }
-        _editingExpense.value = null
-        savedStateHandle.remove<String>(KEY_EDITING_EXPENSE_ID)
     }
 
     fun deleteExpense(expense: ExpenseEntity) {
@@ -145,7 +178,7 @@ class RecordViewModel @Inject constructor(
 
     fun undoDelete(id: String) {
         viewModelScope.launch {
-            expenseRepository.restore(id)
+            expenseRepository.restore(id, clock.millis())
         }
     }
 }

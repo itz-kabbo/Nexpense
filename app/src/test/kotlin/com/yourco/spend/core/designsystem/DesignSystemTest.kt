@@ -21,24 +21,30 @@ class DesignSystemTest {
     fun lightColorsMatchSpecTokens() {
         val colors = lightAppColors()
         assertFalse(colors.isDark)
-        assertEquals(Color(0xFFFFFFFF), colors.background)
-        assertEquals(Color(0xFFF6F6F4), colors.surface)
-        assertEquals(Color(0xFFFBFAF6), colors.paper)
-        assertEquals(Color(0xFF111111), colors.textPrimary)
-        assertEquals(Color(0xFF8A8A8E), colors.textSecondary)
-        assertEquals(Color(0xFFE5E5EA), colors.hairline)
+        assertEquals(Color(0xFFFBFBF9), colors.background)
+        assertEquals(Color(0xFFFFFFFF), colors.surface)
+        assertEquals(Color(0xFFF2F2EC), colors.surfaceVariant)
+        assertEquals(Color(0xFFFDFCF7), colors.paper)
+        assertEquals(Color(0xFF18181B), colors.textPrimary)
+        assertEquals(Color(0xFF71717A), colors.textSecondary)
+        assertEquals(Color(0xFFA1A1AA), colors.textTertiary)
+        assertEquals(Color(0xFFE8E8E2), colors.hairline)
+        assertEquals(Color.Transparent, colors.rimHighlight)
     }
 
     @Test
     fun darkColorsMatchSpecTokens() {
         val colors = darkAppColors()
         assertTrue(colors.isDark)
-        assertEquals(Color(0xFF000000), colors.background)
-        assertEquals(Color(0xFF121212), colors.surface)
-        assertEquals(Color(0xFF1A1A1A), colors.paper)
-        assertEquals(Color(0xFFF2F2F2), colors.textPrimary)
-        assertEquals(Color(0xFF8E8E93), colors.textSecondary)
-        assertEquals(Color(0xFF2C2C2E), colors.hairline)
+        assertEquals(Color(0xFF09090B), colors.background)
+        assertEquals(Color(0xFF141417), colors.surface)
+        assertEquals(Color(0xFF1D1D22), colors.surfaceVariant)
+        assertEquals(Color(0xFF19191E), colors.paper)
+        assertEquals(Color(0xFFF4F4F5), colors.textPrimary)
+        assertEquals(Color(0xFFA1A1AA), colors.textSecondary)
+        assertEquals(Color(0xFF52525B), colors.textTertiary)
+        assertEquals(Color(0xFF27272A), colors.hairline)
+        assertEquals(Color(0x18FFFFFF), colors.rimHighlight)
     }
 
     @Test
@@ -47,6 +53,8 @@ class DesignSystemTest {
 
         // Tabular figures ("tnum") for amount styles
         assertEquals("tnum", typo.bigAmount.fontFeatureSettings)
+        assertEquals("tnum", typo.bigAmountInteger.fontFeatureSettings)
+        assertEquals("tnum", typo.bigAmountDecimals.fontFeatureSettings)
         assertEquals("tnum", typo.amount.fontFeatureSettings)
         assertEquals("tnum", typo.receipt.fontFeatureSettings)
         assertEquals("tnum", typo.receiptTitle.fontFeatureSettings)
@@ -57,8 +65,11 @@ class DesignSystemTest {
         assertEquals(FontFamily.Monospace, typo.receiptTitle.fontFamily)
         assertEquals(FontFamily.Monospace, typo.receiptTotal.fontFamily)
 
-        // Large amount size ~64sp
-        assertEquals(64.sp, typo.bigAmount.fontSize)
+        // Optical hero amount sizes
+        assertEquals(52.sp, typo.bigAmount.fontSize)
+        assertEquals(52.sp, typo.bigAmountInteger.fontSize)
+        assertEquals(34.sp, typo.bigAmountDecimals.fontSize)
+        assertEquals(20.sp, typo.bigAmountCurrency.fontSize)
     }
 
     @Test
@@ -79,6 +90,12 @@ class DesignSystemTest {
         val cardShape = shapes.card as RoundedCornerShape
         assertEquals(16f, cardShape.topStart.toPx(Size(100f, 100f), density))
         assertEquals(16f, cardShape.bottomEnd.toPx(Size(100f, 100f), density))
+
+        // Dock 20dp radius
+        assertTrue(shapes.dock is RoundedCornerShape)
+        val dockShape = shapes.dock as RoundedCornerShape
+        assertEquals(20f, dockShape.topStart.toPx(Size(100f, 100f), density))
+        assertEquals(20f, dockShape.bottomEnd.toPx(Size(100f, 100f), density))
 
         // Chips fully rounded (CircleShape)
         assertEquals(CircleShape, shapes.chip)

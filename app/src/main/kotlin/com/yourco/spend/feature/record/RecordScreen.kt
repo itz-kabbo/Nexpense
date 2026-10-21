@@ -2,14 +2,19 @@ package com.yourco.spend.feature.record
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +22,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
@@ -24,12 +30,12 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -45,10 +51,19 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yourco.spend.R
@@ -73,10 +88,12 @@ fun RecordScreen(
         skipHiddenState = true,
     ),
     onNavigateToSettings: (() -> Unit)? = null,
+    forceCenteredEntryDialog: Boolean = false,
 ) {
     val state by recordVm.state.collectAsStateWithLifecycle()
     val editingExpense by recordVm.editingExpense.collectAsStateWithLifecycle()
     val categories by recordVm.categories.collectAsStateWithLifecycle()
+    val allCategories by recordVm.allCategories.collectAsStateWithLifecycle()
 
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -85,6 +102,13 @@ fun RecordScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.deleted)
     val undoLabel = stringResource(R.string.undo)
+    val saveFailedMessage = stringResource(R.string.save_failed)
+
+    LaunchedEffect(recordVm, snackbarHostState) {
+        recordVm.updateResultEvents.collect { saved ->
+            if (!saved) snackbarHostState.showSnackbar(saveFailedMessage)
+        }
+    }
 
     LaunchedEffect(sheetState) {
         snapshotFlow { sheetState.targetValue }.collect { target ->
@@ -101,38 +125,72 @@ fun RecordScreen(
         scope.launch { sheetState.partialExpand() }
     }
 
-    // VERIFY: Sheet peek height 56dp + navigation bar inset
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+    val useCenteredEntryDialog = forceCenteredEntryDialog || maxWidth >= 600.dp
+
+    // Docked quick-entry bar (52dp) floats above pager indicator (40dp) and navigation bar insets
     BottomSheetScaffold(
-        modifier = modifier,
+        modifier = Modifier.fillMaxSize(),
         scaffoldState = rememberBottomSheetScaffoldState(
             bottomSheetState = sheetState,
             snackbarHostState = snackbarHostState,
         ),
-        sheetPeekHeight = 56.dp + bottomInset,
+        sheetPeekHeight = 104.dp + bottomInset,
         sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        sheetContainerColor = AppTheme.colors.surface,
+        sheetContainerColor = Color.Transparent,
+        sheetShadowElevation = 0.dp,
+        sheetTonalElevation = 0.dp,
         sheetDragHandle = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                EntryHandle(
-                    modifier = Modifier.widthIn(max = 480.dp),
-                    onClick = { scope.launch { sheetState.expand() } },
-                )
+            if (isExpanded) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = AppTheme.spacing.s, bottom = AppTheme.spacing.xs),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 36.dp, height = 4.dp)
+                            .clip(AppTheme.shapes.pill)
+                            .background(AppTheme.colors.hairline),
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AppTheme.spacing.screenHorizontal),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    EntryHandle(
+                        modifier = Modifier.widthIn(max = 480.dp),
+                        onClick = { scope.launch { sheetState.expand() } },
+                    )
+                    Spacer(modifier = Modifier.height(52.dp + bottomInset))
+                }
             }
         },
         sheetContent = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                EntrySheet(
-                    modifier = Modifier.widthIn(max = 480.dp),
-                    viewModel = entryVm,
-                    focusRequester = focusRequester,
-                    onSaved = { scope.launch { sheetState.partialExpand() } },
-                )
+            if (useCenteredEntryDialog) {
+                Spacer(modifier = Modifier.height(1.dp))
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = AppTheme.colors.surface,
+                            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    EntrySheet(
+                        modifier = Modifier.widthIn(max = 480.dp),
+                        viewModel = entryVm,
+                        focusRequester = focusRequester,
+                        onSaved = { scope.launch { sheetState.partialExpand() } },
+                        onSaveFailed = { scope.launch { snackbarHostState.showSnackbar(saveFailedMessage) } },
+                    )
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -140,6 +198,7 @@ fun RecordScreen(
     ) { padding ->
         TodayContent(
             state = state,
+            categories = allCategories,
             onSettingsClick = onNavigateToSettings ?: {},
             onExpenseClick = { expense -> recordVm.startEditing(expense) },
             onDeleteExpense = { expense ->
@@ -160,10 +219,29 @@ fun RecordScreen(
         )
     }
 
+    if (useCenteredEntryDialog && isExpanded) {
+        Dialog(onDismissRequest = { scope.launch { sheetState.partialExpand() } }) {
+            Surface(
+                modifier = Modifier.widthIn(max = 480.dp),
+                shape = AppTheme.shapes.sheet,
+                color = AppTheme.colors.surface,
+                tonalElevation = 6.dp,
+            ) {
+                EntrySheet(
+                    modifier = Modifier.widthIn(max = 480.dp),
+                    viewModel = entryVm,
+                    focusRequester = focusRequester,
+                    onSaved = { scope.launch { sheetState.partialExpand() } },
+                    onSaveFailed = { scope.launch { snackbarHostState.showSnackbar(saveFailedMessage) } },
+                )
+            }
+        }
+    }
+
     if (editingExpense != null) {
         EditSheet(
             expense = editingExpense!!,
-            categories = categories,
+            categories = allCategories,
             onSave = { updated ->
                 recordVm.updateExpense(updated)
             },
@@ -172,17 +250,21 @@ fun RecordScreen(
             },
         )
     }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayContent(
     state: RecordUiState,
+    categories: List<CategoryEntity> = emptyList(),
     modifier: Modifier = Modifier,
     onSettingsClick: () -> Unit = {},
     onExpenseClick: (ExpenseEntity) -> Unit = {},
     onDeleteExpense: (ExpenseEntity) -> Unit = {},
 ) {
+    val settingsCd = stringResource(R.string.cd_settings)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -195,7 +277,7 @@ fun TodayContent(
                 .statusBarsPadding()
                 .padding(
                     start = AppTheme.spacing.screenHorizontal,
-                    end = AppTheme.spacing.s,
+                    end = AppTheme.spacing.screenHorizontal,
                     top = AppTheme.spacing.s,
                     bottom = AppTheme.spacing.s,
                 ),
@@ -204,18 +286,40 @@ fun TodayContent(
         ) {
             Text(
                 text = state.todayDateLabel,
-                style = AppTheme.typography.title.copy(color = AppTheme.colors.textPrimary),
+                style = AppTheme.typography.title.copy(
+                    color = AppTheme.colors.textPrimary,
+                    fontWeight = FontWeight.Medium,
+                ),
             )
-            // VERIFY: Settings icon in top bar
-            IconButton(
-                onClick = onSettingsClick,
-                modifier = Modifier.size(48.dp),
+            // 36dp circular container with 48dp accessible touch target
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable(
+                        role = Role.Button,
+                        onClick = onSettingsClick,
+                        onClickLabel = settingsCd,
+                    )
+                    .semantics {
+                        contentDescription = settingsCd
+                    },
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Settings,
-                    contentDescription = stringResource(R.string.cd_settings),
-                    tint = AppTheme.colors.textPrimary,
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(AppTheme.colors.surfaceVariant)
+                        .border(width = 0.5.dp, color = AppTheme.colors.hairline, shape = CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Settings,
+                        contentDescription = null,
+                        tint = AppTheme.colors.textPrimary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
         }
 
@@ -229,14 +333,23 @@ fun TodayContent(
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            BigAmount(
-                amount = state.amountString,
-                currencySymbol = state.currencySymbol,
-                contentDescription = state.formattedTotal,
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                BigAmount(
+                    amount = state.amountString,
+                    currencySymbol = state.currencySymbol,
+                    currencyCode = state.currencyCode,
+                    contentDescription = state.formattedTotal,
+                )
+                state.otherCurrencyTotals?.let { totals ->
+                    Text(
+                        text = stringResource(R.string.record_other_currency_totals, totals),
+                        style = AppTheme.typography.bodySecondary.copy(color = AppTheme.colors.textSecondary),
+                    )
+                }
+            }
         }
 
-        // LazyColumn of today's expenses or Empty state
+        // LazyColumn of today's expenses or Empty state (clean centered typographic composition)
         if (state.expenses.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -245,12 +358,34 @@ fun TodayContent(
                     .padding(horizontal = AppTheme.spacing.screenHorizontal),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = stringResource(R.string.empty_today),
-                    style = AppTheme.typography.bodySecondary.copy(
-                        color = AppTheme.colors.textSecondary,
-                    ),
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.record_empty_title),
+                        style = AppTheme.typography.title.copy(
+                            color = AppTheme.colors.textPrimary,
+                            fontWeight = FontWeight.Medium,
+                        ),
+                    )
+                    Spacer(modifier = Modifier.height(AppTheme.spacing.xs))
+                    Text(
+                        text = stringResource(R.string.record_empty_subtitle),
+                        style = AppTheme.typography.bodySecondary.copy(
+                            color = AppTheme.colors.textSecondary,
+                        ),
+                    )
+                    Spacer(modifier = Modifier.height(AppTheme.spacing.l))
+                    Text(
+                        text = stringResource(R.string.brand_motto),
+                        style = AppTheme.typography.bodySecondary.copy(
+                            color = AppTheme.colors.textTertiary,
+                            fontStyle = FontStyle.Italic,
+                            fontSize = 13.sp,
+                        ),
+                    )
+                }
             }
         } else {
             LazyColumn(
@@ -290,7 +425,6 @@ fun TodayContent(
                             } else {
                                 Alignment.CenterEnd
                             }
-                            // VERIFY: Swipe to delete background uses hairline color and secondary delete icon
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -298,15 +432,24 @@ fun TodayContent(
                                     .padding(horizontal = AppTheme.spacing.screenHorizontal),
                                 contentAlignment = alignment,
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Delete,
-                                    contentDescription = stringResource(R.string.cd_delete),
-                                    tint = AppTheme.colors.textSecondary,
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(AppTheme.colors.surfaceVariant),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Delete,
+                                        contentDescription = stringResource(R.string.cd_delete),
+                                        tint = AppTheme.colors.textPrimary,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
                             }
                         },
                         content = {
-                            val categoryName = resolveCategoryDisplayName(expense.categoryId)
+                            val categoryName = resolveCategoryDisplayName(expense.categoryId, categories)
                             val note = expense.note.ifBlank { categoryName }
                             val formatted = formatMinor(expense.amountMinor, expense.currency)
                             EntryRow(
@@ -326,7 +469,9 @@ fun TodayContent(
 }
 
 @Composable
-fun resolveCategoryDisplayName(categoryId: String): String {
+fun resolveCategoryDisplayName(categoryId: String, categories: List<CategoryEntity> = emptyList()): String {
+    val customName = categories.firstOrNull { it.id == categoryId }?.nameOverride
+    if (!customName.isNullOrBlank()) return customName
     val resId = CategoryEntity.defaultNameRes(categoryId)
     return if (resId != null) stringResource(resId) else categoryId
 }

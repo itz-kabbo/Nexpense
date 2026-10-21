@@ -24,6 +24,7 @@ import com.yourco.spend.feature.record.RecordViewModel
 import com.yourco.spend.parser.ExpenseParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -138,22 +139,31 @@ class SmokeIntegrationTest {
         )
 
         entryVm.onTextChange("6 coffee")
+        val submitResult1 = backgroundScope.async(UnconfinedTestDispatcher(testScheduler)) {
+            entryVm.submitResultEvents.first()
+        }
         val submitted1 = entryVm.submit()
         assertTrue("Submit '6 coffee' failed", submitted1)
         clock.advanceBy(10)
-        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue("Saving '6 coffee' failed", submitResult1.await())
 
         entryVm.onTextChange("18 taxi")
+        val submitResult2 = backgroundScope.async(UnconfinedTestDispatcher(testScheduler)) {
+            entryVm.submitResultEvents.first()
+        }
         val submitted2 = entryVm.submit()
         assertTrue("Submit '18 taxi' failed", submitted2)
         clock.advanceBy(10)
-        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue("Saving '18 taxi' failed", submitResult2.await())
 
         entryVm.onTextChange("42 dinner")
+        val submitResult3 = backgroundScope.async(UnconfinedTestDispatcher(testScheduler)) {
+            entryVm.submitResultEvents.first()
+        }
         val submitted3 = entryVm.submit()
         assertTrue("Submit '42 dinner' failed", submitted3)
         clock.advanceBy(10)
-        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue("Saving '42 dinner' failed", submitResult3.await())
 
         // (c) Today list shows 3 entries and total of 6600 ($66.00)
         val recordVm = RecordViewModel(
@@ -166,7 +176,7 @@ class SmokeIntegrationTest {
             todayObserver = todayObserver,
         )
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        val recordJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             recordVm.state.collect {}
         }
 
@@ -184,7 +194,7 @@ class SmokeIntegrationTest {
             todayObserver = todayObserver,
         )
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        val receiptJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             receiptVm.state.collect {}
         }
 
@@ -210,7 +220,7 @@ class SmokeIntegrationTest {
             todayObserver = todayObserver,
         )
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        val insightJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             insightVm.state.collect {}
         }
 
@@ -242,6 +252,13 @@ class SmokeIntegrationTest {
         assertTrue(exportedJson.contains("\"coffee\""))
         assertTrue(exportedJson.contains("\"taxi\""))
         assertTrue(exportedJson.contains("\"dinner\""))
+
+        // Cancel background collectors before database wipe so that background flows don't attempt
+        // to re-seed categories or process database truncation concurrently
+        recordJob.cancel()
+        receiptJob.cancel()
+        insightJob.cancel()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // (g) DB wipe
         database.clearAllTables()

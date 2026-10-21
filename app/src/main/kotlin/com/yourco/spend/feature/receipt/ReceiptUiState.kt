@@ -16,6 +16,12 @@ data class ReceiptItemUiModel(
     val formattedAmount: String,
 )
 
+@Immutable
+data class ReceiptCurrencyTotalUiModel(
+    val currencyCode: String,
+    val formattedTotal: String,
+)
+
 /**
  * State for the Daily Receipt screen.
  * Money is Long minor units. Never Float or Double.
@@ -29,6 +35,7 @@ data class ReceiptUiState(
     val totalMinor: Long = 0L,
     val formattedTotal: String = "",
     val currencyCode: String = "USD",
+    val currencyTotals: List<ReceiptCurrencyTotalUiModel> = emptyList(),
     val isEmpty: Boolean = true,
     val canGoForward: Boolean = false,
 )

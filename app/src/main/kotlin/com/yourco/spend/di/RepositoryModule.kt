@@ -8,6 +8,8 @@ import com.yourco.spend.data.repo.LearnedMappingRepository
 import com.yourco.spend.data.repo.LearnedMappingRepositoryImpl
 import com.yourco.spend.data.repo.SettingsRepository
 import com.yourco.spend.data.repo.SettingsRepositoryImpl
+import com.yourco.spend.data.repo.ThemeRepository
+import com.yourco.spend.data.repo.ThemeRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -33,4 +35,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindThemeRepository(impl: ThemeRepositoryImpl): ThemeRepository
 }

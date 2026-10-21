@@ -78,7 +78,7 @@ fun MonthSparkline(
 
         val slotWidth = totalWidth / points.size
         val barWidth = min(slotWidth * 0.55f, 4.dp.toPx())
-        val cornerRadius = CornerRadius(1.dp.toPx(), 1.dp.toPx())
+        val cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
 
         val currentDayStyle = TextStyle(
             color = primaryColor,
@@ -94,6 +94,19 @@ fun MonthSparkline(
         points.forEachIndexed { index, point ->
             val slotCenterX = (index + 0.5f) * slotWidth
             val left = slotCenterX - (barWidth / 2f)
+
+            // Tactile ghost track (10% opacity) anchoring timeline
+            val ghostTrackColor = if (point.isCurrentDay) {
+                primaryColor.copy(alpha = 0.25f)
+            } else {
+                hairlineColor.copy(alpha = 0.5f)
+            }
+            drawLine(
+                color = ghostTrackColor,
+                start = Offset(slotCenterX, baselineY),
+                end = Offset(slotCenterX, baselineY - maxBarHeight),
+                strokeWidth = 1.dp.toPx(),
+            )
 
             val fraction = if (point.fraction.isNaN()) 0f else point.fraction.coerceIn(0f, 1f)
             val barHeight = maxBarHeight * fraction
@@ -121,8 +134,8 @@ fun MonthSparkline(
                 // Subtle indicator dot for current day if 0 spending
                 drawCircle(
                     color = primaryColor,
-                    radius = 1.5.dp.toPx(),
-                    center = Offset(slotCenterX, baselineY - 3.dp.toPx()),
+                    radius = 2.dp.toPx(),
+                    center = Offset(slotCenterX, baselineY - 4.dp.toPx()),
                 )
             }
 

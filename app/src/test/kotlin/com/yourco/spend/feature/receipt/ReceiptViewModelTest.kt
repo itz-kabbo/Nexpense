@@ -328,8 +328,8 @@ class ReceiptViewModelTest {
         assertEquals("", state.items[0].note)
         assertEquals(R.string.category_food, state.items[0].noteRes)
 
-        // e2: whitespace note -> noteRes is R.string.category_other
-        assertEquals("   ", state.items[1].note)
+        // e2: unknown category and blank note -> localized "Other" fallback
+        assertEquals("", state.items[1].note)
         assertEquals(R.string.category_other, state.items[1].noteRes)
 
         // e3: non-blank note -> noteRes is null, note preserved

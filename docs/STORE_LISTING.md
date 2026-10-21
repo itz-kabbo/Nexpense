@@ -5,7 +5,7 @@
 ## 1. English (en-US)
 
 ### App Title (max 30 characters)
-`Mote - Expense Tracker`
+`Nexpense - Expense Tracker`
 
 ### Short Description (max 80 characters)
 `Effortless offline expense tracking. Natural text input, zero telemetry.`
@@ -13,15 +13,15 @@
 
 ### Full Description (max 4000 characters)
 ```text
-Mote is an ultra-fast, offline-first expense tracker designed to get out of your way. Log transactions in seconds using natural language, review daily spending on a simulated printed receipt, and explore your spending habits with clean, focused insights.
+Nexpense is an ultra-fast, offline-first expense tracker designed to get out of your way. Log transactions in seconds using natural language, review daily spending on a simulated printed receipt, and explore your spending habits with clean, focused insights.
 
-NO ADS. NO CLOUD. NO TELEMETRY.
-Mote requires zero network permissions (no android.permission.INTERNET). Your financial data never leaves your device, cannot be tracked, and belongs entirely to you.
+NO ADS. NO NEXPENSE CLOUD. NO TELEMETRY.
+Nexpense requires zero network permissions and does not transmit data to Nexpense servers. If Android system backup is enabled, Android may include local app data in its backup service.
 
 KEY FEATURES:
 
 • Natural Text Input:
-  Simply swipe up and type what you spent: "6 coffee", "18 taxi", or "42 dinner". Mote automatically extracts the amount, assigns the category, and saves the note in real time.
+  Simply swipe up and type what you spent: "6 coffee", "18 taxi", or "42 dinner". Nexpense automatically extracts the amount, assigns the category, and saves the note in real time.
 
 • Tactile Receipt View:
   Step through your spending history day by day rendered as an authentic shopping receipt with perforated edges, monospace typography, and itemized totals.
@@ -30,10 +30,10 @@ KEY FEATURES:
   View clean, visual spending summaries across Day, Month, and Year periods. See exactly where your money goes with an intuitive 12-month bar chart, daily sparkline distribution, and percentage breakdowns by category.
 
 • Multi-Language & Multi-Currency:
-  Full localization support in English and Traditional Chinese (繁體中文). Customize your currency code (USD, EUR, TWD, JPY, GBP, and more) with automatic sub-unit and symbol formatting.
+  26 language choices, including English and Traditional Chinese (繁體中文). Customize your currency code (USD, EUR, TWD, JPY, GBP, and more) with automatic sub-unit and symbol formatting.
 
 • Total Data Ownership:
-  Export your complete transaction history to standard JSON and CSV files anytime with Android's native document picker. Full round-trip import and local database wipe ensure you are always in control.
+  Export with Android's native document picker. JSON preserves expense records and categories for backup and restore; CSV is a spreadsheet-friendly, lossy interchange format. Settings also includes a full local data wipe.
 
 • Thoughtful Material Design:
   Dark and Light themes with bespoke paper palettes, fluid spring animations, tactile haptic feedback, edge-to-edge system integration, and responsive layouts across phones, foldables, and tablets.
@@ -44,7 +44,7 @@ KEY FEATURES:
 ## 2. Traditional Chinese (zh-TW)
 
 ### App Title (max 30 characters)
-`Mote - 極簡記帳`
+`Nexpense - 極簡記帳`
 
 ### Short Description (max 80 characters)
 `極簡離線記帳。自然文字快速輸入，無聯網權限，純粹隱私。`
@@ -52,15 +52,15 @@ KEY FEATURES:
 
 ### Full Description (max 4000 characters)
 ```text
-Mote 是一款極致流暢、完全離線的個人記帳應用程式。透過直覺的自然文字輸入，在幾秒鐘內輕鬆完成每一筆開銷記錄；翻閱復古擬真的電子收據，並透過清晰優雅的圖表洞察收支趨勢。
+Nexpense 是一款極致流暢、完全離線的個人記帳應用程式。透過直覺的自然文字輸入，在幾秒鐘內輕鬆完成每一筆開銷記錄；翻閱復古擬真的電子收據，並透過清晰優雅的圖表洞察收支趨勢。
 
-零廣告 · 零雲端 · 零追蹤
-Mote 完全不請求聯網權限（無 INTERNET 權限）。您的所有財務數據皆儲存在本機私有空間，不被追蹤、不上傳雲端，完全由您自主掌控。
+零廣告 · 無 Nexpense 雲端 · 零追蹤
+Nexpense 不請求聯網權限，也不會將資料傳送至 Nexpense 伺服器。若您啟用 Android 系統備份，Android 可能會將本機應用程式資料納入備份。
 
 核心特色：
 
 • 自然文字極速輸入：
-  向上滑動開啟輸入面板，直接輸入「6 咖啡」、「18 計程車」或「42 晚餐」，Mote 即時解析金額、自動歸類並儲存備註。
+  向上滑動開啟輸入面板，直接輸入「6 咖啡」、「18 計程車」或「42 晚餐」，Nexpense 即時解析金額、自動歸類並儲存備註。
 
 • 擬真紙質收據：
   仿照實體店面列印收據的設計，具備鋸齒邊緣、等寬字體與清楚明瞭的分項清單，按日瀏覽您的每一筆花費細節。
@@ -68,11 +68,11 @@ Mote 完全不請求聯網權限（無 INTERNET 權限）。您的所有財務�
 • 直覺財務洞察：
   提供「日」、「月」、「年」三種維度的高效統計。透過 12 個月長條圖、每日分佈微型圖與分類百分比佔比，讓您對開支動向一目了然。
 
-• 完整中英文與多幣別支援：
-  完整支援繁體中文（台灣）與英文介面。支援自訂貨幣代碼（TWD, USD, JPY, EUR 等），自動適配貨幣符號與小數點格式。
+• 多語言與多幣別支援：
+  提供 26 種語言選項，包含繁體中文（台灣）與英文。支援自訂貨幣代碼（TWD, USD, JPY, EUR 等），自動適配貨幣符號與小數點格式。
 
 • 資料百分之百屬於您：
-  隨時透過 Android 系統文件選擇器將歷史記錄完整匯出為標準 JSON 或 CSV 格式。支援無損雙向匯入與一鍵清除本機資料。
+  隨時透過 Android 系統文件選擇器匯出資料。JSON 可保留支出與分類以供備份還原；CSV 適合試算表交換，但不保留所有原始中繼資料。設定中也提供清除本機使用者資料的功能。
 
 • 細緻的 Material Design 體驗：
   支援淺色與深色模式、經典紙感配色、流暢的彈簧物理動效、細膩的震動回饋，以及完美適配手機與平板電腦的響應式版面配置。

@@ -7,12 +7,27 @@ plugins {
     alias(libs.plugins.roborazzi)
 }
 
+val releaseStoreFile = providers.gradleProperty("releaseStoreFile")
+    .orElse(providers.environmentVariable("RELEASE_STORE_FILE")).orNull
+val releaseStorePassword = providers.gradleProperty("releaseStorePassword")
+    .orElse(providers.environmentVariable("RELEASE_STORE_PASSWORD")).orNull
+val releaseKeyAlias = providers.gradleProperty("releaseKeyAlias")
+    .orElse(providers.environmentVariable("RELEASE_KEY_ALIAS")).orNull
+val releaseKeyPassword = providers.gradleProperty("releaseKeyPassword")
+    .orElse(providers.environmentVariable("RELEASE_KEY_PASSWORD")).orNull
+val releaseSigningConfigured = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.yourco.spend"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.yourco.spend"
+        applicationId = "com.nexusbench.nexpense"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -21,8 +36,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            if (releaseSigningConfigured) {
+                storeFile = rootProject.file(releaseStoreFile!!)
+                storePassword = releaseStorePassword!!
+                keyAlias = releaseKeyAlias!!
+                keyPassword = releaseKeyPassword!!
+                enableV1Signing = true
+                enableV2Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -145,6 +176,21 @@ tasks.register("checkNoInternetPermission") {
                 throw GradleException("Security violation: ${srcManifest.path} contains android.permission.INTERNET!")
             }
             println("SUCCESS: Verified source AndroidManifest contains NO android.permission.INTERNET.")
+        }
+    }
+}
+
+tasks.matching { it.name in setOf("assembleRelease", "bundleRelease", "packageRelease") }.configureEach {
+    dependsOn("checkNoInternetPermission")
+    doFirst {
+        if (!releaseSigningConfigured) {
+            throw GradleException(
+                "Release signing is not configured. Set releaseStoreFile, releaseStorePassword, " +
+                    "releaseKeyAlias, and releaseKeyPassword in local Gradle properties or environment variables."
+            )
+        }
+        if (android.defaultConfig.applicationId == "com.yourco.spend") {
+            throw GradleException("Set the final publisher applicationId before creating a release build.")
         }
     }
 }

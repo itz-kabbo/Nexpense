@@ -99,6 +99,28 @@ fun YearBarChart(
             val slotCenterX = (index + 0.5f) * slotWidth
             val left = slotCenterX - (barWidth / 2f)
 
+            // Tactile ghost track (10% opacity) anchoring all 12 months
+            val ghostTrackColor = if (bar.isCurrentMonth) {
+                primaryColor.copy(alpha = 0.18f)
+            } else {
+                hairlineColor.copy(alpha = 0.5f)
+            }
+            val ghostPath = Path().apply {
+                addRoundRect(
+                    RoundRect(
+                        left = left,
+                        top = baselineY - maxBarHeight,
+                        right = left + barWidth,
+                        bottom = baselineY,
+                        topLeftCornerRadius = cornerRadius,
+                        topRightCornerRadius = cornerRadius,
+                        bottomLeftCornerRadius = CornerRadius.Zero,
+                        bottomRightCornerRadius = CornerRadius.Zero,
+                    ),
+                )
+            }
+            drawPath(ghostPath, color = ghostTrackColor)
+
             // Bar height safely clamped (no divide by zero, handles NaN)
             val fraction = if (bar.fraction.isNaN()) 0f else bar.fraction.coerceIn(0f, 1f)
             val barHeight = maxBarHeight * fraction

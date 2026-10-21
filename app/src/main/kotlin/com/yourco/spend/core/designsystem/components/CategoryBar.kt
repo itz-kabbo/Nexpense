@@ -48,8 +48,8 @@ fun CategoryBar(
                 contentDescription = accessibilityText
             }
             .padding(
-                horizontal = AppTheme.spacing.screenHorizontal,
-                vertical = AppTheme.spacing.s,
+                horizontal = 16.dp,
+                vertical = 12.dp,
             ),
     ) {
         Row(
@@ -75,19 +75,19 @@ fun CategoryBar(
             )
         }
         Spacer(modifier = Modifier.height(AppTheme.spacing.xs))
-        // Thin proportional bar (4dp height)
+        // Pill-shaped progress capsule (6dp height)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(4.dp)
+                .height(6.dp)
                 .clip(AppTheme.shapes.pill)
-                .background(AppTheme.colors.surface),
+                .background(AppTheme.colors.surfaceVariant),
         ) {
             if (clampedFraction > 0f) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(clampedFraction)
-                        .height(4.dp)
+                        .height(6.dp)
                         .clip(AppTheme.shapes.pill)
                         .background(AppTheme.colors.textPrimary),
                 )
