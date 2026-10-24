@@ -86,15 +86,18 @@ The signed APK is written to `app/build/outputs/apk/release/app-release.apk`. Ke
 | Main technologies | Kotlin, Jetpack Compose, Room, Hilt, DataStore |
 | Build JDK | 21 |
 
-## Inspiration and attribution
+## Creators and inspiration
 
-Nexpense was inspired by **[Mote. — Minimal Expense Tracker](https://apps.apple.com/au/app/mote/id6816360396)** by **Yun Ju Tseng** (Rice Tseng), an iOS app with a similarly simple approach to personal expense tracking. Nexpense is an independent Android project; it is not affiliated with or endorsed by Mote or its developer.
+Nexpense was created collaboratively by [luciferx05](https://github.com/luciferx05) and [itz-kabbo](https://github.com/itz-kabbo).
 
-This project was made for my own use in my spare time and was **fully vibe-coded with Claude, Gemini, and ChatGPT**. These AI tools and their providers are not affiliated with or endorsing Nexpense.
+The project was inspired by [Mote. — Minimal Expense Tracker](https://apps.apple.com/au/app/mote/id6816360396) by Yun Ju Tseng (Rice Tseng). Nexpense is an independent Android project and is not affiliated with or endorsed by Mote or its developer.
+
+The project was made in our spare time and was **fully vibe-coded with Claude, Gemini, and ChatGPT**. These AI tools and their providers are not affiliated with or endorsing Nexpense.
 
 ## Documentation
 
 - [Product and engineering guide](docs/GUIDE.md)
+- [UI overview](docs/UI.md)
 - [Privacy policy](docs/PRIVACY.md)
 - [Data safety notes](docs/DATA_SAFETY.md)
 - [Store listing draft](docs/STORE_LISTING.md)

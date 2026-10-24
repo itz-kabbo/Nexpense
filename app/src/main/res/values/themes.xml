@@ -3,12 +3,9 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
-    <style name="Theme.Mote" parent="Theme.Nexpense" />
-
     <style name="Theme.Nexpense.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_bg</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_transparent_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.Nexpense</item>
     </style>
-    <style name="Theme.Mote.Starting" parent="Theme.Nexpense.Starting" />
 </resources>

@@ -9,6 +9,7 @@ Thanks for taking an interest in Nexpense. Bug reports, focused improvements, an
 3. Keep changes focused and follow the project guidance in [`AGENTS.md`](AGENTS.md) and [`docs/GUIDE.md`](docs/GUIDE.md).
 4. Do not add networking, analytics, advertising, tracking, or new dependencies without discussing the change first. Nexpense is designed to work offline and without an Internet permission.
 5. Never include real expense records, account details, signing credentials, keystores, or other private data in an issue, screenshot, test fixture, or commit.
+6. Avoid publishing a personal email in Git commit metadata. Use the GitHub-provided noreply address from your account's email settings.
 
 ## Build and checks
 

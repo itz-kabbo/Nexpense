@@ -4,5 +4,4 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_transparent_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.Nexpense</item>
     </style>
-    <style name="Theme.Mote.Starting" parent="Theme.Nexpense.Starting" />
 </resources>

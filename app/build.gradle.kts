@@ -23,7 +23,7 @@ val releaseSigningConfigured = listOf(
 ).all { !it.isNullOrBlank() }
 
 android {
-    namespace = "com.yourco.spend"
+    namespace = "com.nexusbench.nexpense"
     compileSdk = 36
 
     defaultConfig {
@@ -71,10 +71,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        jvmTarget = "21"
-    }
-
     buildFeatures {
         compose = true
     }
@@ -87,6 +83,12 @@ android {
                 it.systemProperty("roborazzi.test.record", "true")
             }
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
 
@@ -189,8 +191,8 @@ tasks.matching { it.name in setOf("assembleRelease", "bundleRelease", "packageRe
                     "releaseKeyAlias, and releaseKeyPassword in local Gradle properties or environment variables."
             )
         }
-        if (android.defaultConfig.applicationId == "com.yourco.spend") {
-            throw GradleException("Set the final publisher applicationId before creating a release build.")
+        if (android.defaultConfig.applicationId.orEmpty().split('.').any { it == "example" || it == "yourco" }) {
+            throw GradleException("Replace the placeholder applicationId before creating a release build.")
         }
     }
 }
