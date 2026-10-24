@@ -20,7 +20,7 @@ espresso = "3.6.1"
 turbine = "1.2.0"
 spotless = "6.25.0"
 roborazzi = "1.38.0"
-robolectric = "4.14.1"
+robolectric = "4.17"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
