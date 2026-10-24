@@ -1,7 +1,7 @@
 # Nexpense Repository Audit
 
 **Review date:** 2026-10-24
-**Release reviewed:** v1.0.0
+**Release reviewed:** v1.0.1
 **Scope:** source packages, data storage and import/export, release configuration, repository documentation, and CI status.
 
 ## Current project status
@@ -10,7 +10,7 @@
 - Release signing values are read from local Gradle properties or environment variables. No keystore or signing password is tracked in the repository.
 - The app does not request Android's INTERNET permission. CI checks the release manifest for that permission.
 - Expense data stays in the local Room database unless the user exports it or Android system backup is enabled. See the privacy policy and data safety notes for the backup behavior.
-- The published v1.0.0 GitHub release includes a signed APK and a SHA-256 checksum.
+- The published v1.0.1 GitHub release includes a signed APK and a SHA-256 checksum. The v1.0.0 release remains available.
 
 ## Existing product safeguards
 

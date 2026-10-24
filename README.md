@@ -3,10 +3,15 @@
 **A quiet, offline-first Android expense tracker.** Log an expense in plain language, review the day as a receipt, and understand spending over time.
 
 [![Android CI](https://github.com/itz-kabbo/Nexpense/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/itz-kabbo/Nexpense/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/itz-kabbo/Nexpense?label=latest%20release)](https://github.com/itz-kabbo/Nexpense/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com/about/versions/oreo)
 
-Nexpense is a personal project made in my free time because I wanted a simple expense tracker on Android. I’m sharing it so anyone who finds it useful can use, study, or adapt it.
+Nexpense is a personal project we built in our spare time because we wanted a simple expense tracker on Android. We’re sharing it so anyone who finds it useful can use, study, or adapt it.
+
+## Download
+
+Get the latest signed Android APK from [GitHub Releases](https://github.com/itz-kabbo/Nexpense/releases/latest).
 
 ## Features
 
@@ -101,7 +106,6 @@ The project was made in our spare time and was **fully vibe-coded with Claude, G
 - [Privacy policy](docs/PRIVACY.md)
 - [Data safety notes](docs/DATA_SAFETY.md)
 - [Store listing draft](docs/STORE_LISTING.md)
-- [UI/UX design specification](docs/UI.md)
 - [Audit report](docs/AUDIT_REPORT.md)
 
 ## Contributing
